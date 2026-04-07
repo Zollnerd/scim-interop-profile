@@ -60,47 +60,32 @@ A Service Provider is conformant with this profile if it implements all the "MUS
 
 A Client is conformant with this profile if it is capable of interacting with a conformant Service Provider.
 
-Implementations claiming conformance to this profile should indicate so in their `ServiceProviderConfig` response.
+Service Providers claiming conformance with this profile MUST indicate so by including an `interopProfileConformant` attribute in their `ServiceProviderConfig` response with a value of `true`. This attribute is defined as follows:
+
+* Name: `interopProfileConformant`
+* Type: Boolean
+* Multi-Valued: false
+* Required: false
+* Mutability: readOnly
+* Returned: default
+
+A Service Provider that does not conform to this profile MUST either omit this attribute or set its value to `false`.
 
 # Data Model Requirements
 
-## Supported Resource Types
+## Discovery Endpoints
 
-Conformant Service Providers MUST implement the following resource types and their corresponding endpoints:
-
-*  `User` ([RFC7643], Section 4.1)
-
-Service Providers MUST publish an accurate list of schemas and attributes via the `/Schemas` endpoint, matching exactly what is implemented and supported by the service.
-
-Conformant Service Providers MAY implement the following resource types and their corresponding endpoints:
-
-*  `Group` ([RFC7643], Section 4.2)
-
-The following configuration discovery-related resource types and their corresponding endpoints MUST be implemented:
+Service Providers MUST implement the following configuration discovery endpoints:
 
 *  `ServiceProviderConfig` ([RFC7643], Section 4)
 *  `Schema` ([RFC7643], Section 7)
 *  `ResourceType` ([RFC7643], Section 6)
 
-## Attribute Requirements
+Service Providers MUST publish an accurate list of schemas and attributes via the `/Schemas` endpoint, matching exactly what is implemented and supported by the service. All schemas referenced in resource type definitions returned by the `/ResourceTypes` endpoint MUST also be available at the `/Schemas` endpoint.
 
-This section will define the minimal set of attributes that MUST be supported for the `User` and `Group` resources to ensure a baseline level of interoperability.
+The schema and resource type definitions for `ServiceProviderConfig`, `Schema`, and `ResourceType` MAY be omitted from the `/Schemas` and `/ResourceTypes` endpoints respectively, as these are configuration resources rather than provisioning targets.
 
-### User Attributes
-
-To ensure a functional baseline for user provisioning, Service Providers **MUST** support the following attributes for the `User` resource:
-
-* `userName`
-* `active`
-* `displayName`
-* `name.givenName`
-* `name.familyName`
-
-The `password` attribute is deprecated and **MUST NOT** be implemented. Service Providers **SHOULD NOT** store user passwords and should rely on other authentication methods, such as federation via SAML or OpenID Connect, to authenticate users.
-
-### Group Attributes
-
-Service Providers MUST support both the `displayName` and `members` attributes. All group resources MUST contain a value for `displayName`. Service Providers MUST allow groups to be created without any members.   
+For every `ResourceType` resource returned by the `/ResourceTypes` endpoint, Service Providers MUST populate the `id` attribute and its value MUST equal the value of the `name` attribute.
 
 ## Case Sensitivity
 
@@ -108,6 +93,7 @@ To ensure predictable and interoperable behavior, Service Providers **MUST** imp
 
 Furthermore, this profile requires adherence to the case sensitivity definitions specified in [RFC7643] for the following common attributes:
 *   `userName`: `caseExact` is `false`. Service Providers **MUST** treat `JSmith` and `jsmith` as equivalent.
+*   `id`: `caseExact` is `true`. Service Providers **MUST** treat `abc-123` and `ABC-123` as distinct values.
 *   `externalId`: `caseExact` is `true`. Service Providers **MUST** treat `ABC-123` and `abc-123` as distinct values.
 
 ## Attribute and Schema Handling
@@ -118,9 +104,15 @@ The Service Provider **MUST** return an HTTP `400 Bad Request` with a `scimType`
 
 ## Canonical Values for Typed Attributes
 
-For multi-valued attributes that include a `type` sub-attribute (e.g., `emails`, `phoneNumbers`, `ims`, `photos`), Clients **MUST** use the canonical `type` values defined in [RFC7643] (e.g., "work", "home", "other"). Service Providers **MUST** treat these canonical values as case-insensitive.
+For multi-valued complex attributes that include a `type` sub-attribute (e.g., `emails`, `phoneNumbers`, `ims`, `addresses`), Service Providers MUST advertise the acceptable values for that `type` sub-attribute in the `canonicalValues` property of the attribute's schema definition, as returned by the `/Schemas` endpoint. Clients MUST use only `type` values that are advertised in the `canonicalValues` property for that attribute in the schema definition returned by the Service Provider via `/Schemas`.
 
 # Protocol and Endpoint Requirements
+
+## Endpoint Structure
+
+Service Providers MUST offer a unique endpoint for each implemented resource type (e.g., `/Users`, `/Groups`). Resources of different types MUST NOT share an endpoint. The Service Provider root endpoint (e.g., `https://example.com/scim/v2/`) MAY return resources of all types if implemented.
+
+Service Providers MUST use `/{endpoint}/{id}` as the canonical URI for addressing any resource and MUST NOT address resources via other attribute values in the URI path (e.g., `/{userName}`). Clients MUST use `/{id}` when retrieving a known resource, and MUST use the `filter` query parameter to locate a resource by any other attribute value.
 
 ## Data Format and HTTP Headers
 
@@ -201,6 +193,12 @@ Service Providers **MAY** return an HTTP `400 Bad Request` for any PATCH operati
 
 Service Providers **MUST NOT** treat a `PATCH` request that sets the `active` attribute to `false` as a deletion of the resource. A disabled user is considered inactive and should be excluded from authentication and normal access, but the user object itself **MUST** be retained by the Service Provider. Deletion of a resource can only be performed via an HTTP `DELETE` request.
 
+Service Providers MUST return `404 Not Found` in response to any operation targeting a deleted resource and MUST omit deleted resources from all query results.
+
+After a resource is successfully deleted, its unique identifiers (such as `userName`) MUST NOT be considered in uniqueness conflict calculations and MUST be available for reassignment to a new resource.
+
+Service Providers MUST NOT interpret an HTTP `DELETE` request as deactivation of the resource (i.e., setting `active` to `false`).
+
 ## Concurrency and Versioning
 
 SCIM clients **MUST NOT** include HTTP headers related to conditional requests or entity tags (ETags), such as `If-Match`, `If-None-Match`, `If-Modified-Since`, or `If-Unmodified-Since`. Service Providers are not expected to support these headers and **MAY** ignore them or reject the request. This profile relies on the principle of "last write wins" for simplicity.
@@ -237,15 +235,14 @@ This section provides a summary of SCIM 2.0 features that are considered depreca
     * Path filters that target a whole element instead of a sub-attribute (e.g., `emails[type eq "work"]`).
 *  **Certain Filter Operators**: Such as `pr` (presence).
 *  **HTTP PUT**: The HTTP PUT method is deprecated in favor of HTTP PATCH to simplify implementation and reduce the risk of accidental data loss.
-*  **User "password" attribute**: The "password" attribute is deprecated and MUST NOT be implemented. Service providers SHOULD NOT store user passwords and should rely on other authentication methods, such as federation via SAML or OpenID Connect, to authenticate users.
 *  **Filters in URI for non-GET methods**: The use of filters in the URI for any HTTP method other than GET (e.g., PATCH /Users?filter=department eq 'sales') is deprecated and MUST NOT be used.
-*  **Silent Ignoring of Unknown Attributes**: Service Providers MUST reject requests containing unknown attributes or schemas, as defined in Section 4.4.
+*  **Silent Ignoring of Unknown Attributes**: Service Providers MUST reject requests containing unknown attributes or schemas, as defined in Section 4.3.
 *  **Client-side Versioning**: Clients MUST NOT send requests with HTTP versioning or ETag-related headers, as defined in Section 5.6.
 *  **Disabling Users as Deletion**: Service Providers MUST NOT translate disabling a user (`active` = `false`) into a deletion, as defined in Section 5.5. 
 
 # IANA Considerations
 
-This document has no IANA actions.
+This document requests that the IANA SCIM Server-Related Schema URIs registry entry for `urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig` be updated to include or reference the `interopProfileConformant` attribute defined in Section 4 of this document.
 
 # Acknowledgements
 
