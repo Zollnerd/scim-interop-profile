@@ -2,6 +2,7 @@
 title: SCIM 2.0 Interoperability Profile
 abbrev: SCIM Interop Profile
 ipr: trust200902
+submissionType: std
 area: Applications and Real-Time
 workgroup: SCIM
 keyword:
