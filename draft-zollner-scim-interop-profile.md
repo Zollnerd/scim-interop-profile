@@ -2,7 +2,7 @@
 title: SCIM 2.0 Interoperability Profile
 abbrev: SCIM Interop Profile
 ipr: trust200902
-submissionType: std
+category: std
 area: Applications and Real-Time
 workgroup: SCIM
 keyword:
@@ -15,7 +15,7 @@ pi: [toc, sortrefs, symrefs]
 docname: draft-zollner-scim-interop-profile-latest
 
 author:
-  - 
+  -
     name: Danny Zollner
     organization: Okta
     email: danny.zollner@okta.com
@@ -25,7 +25,7 @@ normative:
   RFC7643:
   RFC9865:
   RFC8446:
-  
+
 ---
 
 
@@ -147,7 +147,7 @@ This profile defines a restricted subset of the SCIM 2.0 `PATCH` method to ensur
 ### General PATCH Constraints
 
 #### Mandatory Use of the 'path' Attribute
-Every operation object within the `Operations` array **MUST** contain a `path` attribute. Clients **MUST NOT** issue "path-less" PATCH operations where the target attribute is implied by the keys within the `value` object. 
+Every operation object within the `Operations` array **MUST** contain a `path` attribute. Clients **MUST NOT** issue "path-less" PATCH operations where the target attribute is implied by the keys within the `value` object.
 
 Service Providers **MUST** reject PATCH requests containing operations that lack a `path` attribute with an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
 
