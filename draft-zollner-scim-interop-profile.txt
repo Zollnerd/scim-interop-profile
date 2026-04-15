@@ -4,8 +4,8 @@
 
 SCIM                                                          D. Zollner
 Internet-Draft                                                      Okta
-Intended status: Standards Track                           13 April 2026
-Expires: 15 October 2026
+Intended status: Standards Track                           15 April 2026
+Expires: 17 October 2026
 
 
                    SCIM 2.0 Interoperability Profile
@@ -43,7 +43,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 October 2026.
+   This Internet-Draft will expire on 17 October 2026.
 
 Copyright Notice
 
