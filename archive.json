@@ -1,0 +1,109 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2026-04-16T00:20:27.315391+00:00",
+  "repo": "Zollnerd/scim-interop-profile",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [],
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDORcWBWc7SGEZF",
+      "title": "SCIM interop revision ipsie scope split",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/pull/1",
+      "state": "MERGED",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Massive set of changes including:\r\n\r\n- Removed content that was not related to protocol-level, resource-agnostic interoperability. This content is out of scope for the draft and should be proposed in the IPSIE working group's SCIM Account Lifecycle (AL) drafts, or in another new draft independent from this one. \r\n- Reorganized content flow\r\n- Adjusted some normative requirements based on feedback on the mailing list\r\n- Added new requirements based on mailing list feedback\r\n- Tweaks to document metadata, cleaned up trailing whitespace and other linting issues",
+      "createdAt": "2026-04-13T19:38:00Z",
+      "updatedAt": "2026-04-13T19:40:47Z",
+      "baseRepository": "Zollnerd/scim-interop-profile",
+      "baseRefName": "main",
+      "baseRefOid": "6cc3321b03358c8e5a768a69c3545d5ef30f3a13",
+      "headRepository": "Zollnerd/scim-interop-profile",
+      "headRefName": "scim-interop-revision-ipsie-scope-split",
+      "headRefOid": "fda3c5f174da1d626a7dc7d017b50da832b384bf",
+      "closedAt": "2026-04-13T19:40:47Z",
+      "mergedAt": "2026-04-13T19:40:47Z",
+      "mergedBy": "Zollnerd",
+      "mergeCommit": {
+        "oid": "9fc6b82b38530678ac53a515f07476d4216a57e7"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDORcWBWc7SIr-v",
+      "title": "Removing Codeowners file",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/pull/2",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-04-13T22:28:55Z",
+      "updatedAt": "2026-04-13T22:28:55Z",
+      "baseRepository": "Zollnerd/scim-interop-profile",
+      "baseRefName": "main",
+      "baseRefOid": "9fc6b82b38530678ac53a515f07476d4216a57e7",
+      "headRepository": "Zollnerd/scim-interop-profile",
+      "headRefName": "scim-interop-revision-ipsie-scope-split",
+      "headRefOid": "027b8014e55f1e179f7d06a3aeb4eebb08fcba09",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    }
+  ]
+}
