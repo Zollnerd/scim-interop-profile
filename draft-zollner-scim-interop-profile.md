@@ -55,7 +55,7 @@ This document specifies a profile for SCIM 2.0 that addresses these challenges b
 
 This profile applies to SCIM 2.0 Service Providers and Clients.
 
-Requirements in this document, expressed using the normative terms "MUST", "SHALL", and "REQUIRED" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.
+Absolute requirements and prohibitions in this document, expressed using the BCP 14 keywords "MUST", "MUST NOT", "SHALL", "SHALL NOT", and "REQUIRED" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.
 
 Service Providers claiming conformance with this profile MUST include an `interopProfileConformant` attribute with a value of `true` in their `ServiceProviderConfig` response. This attribute is defined as follows:
 
@@ -174,7 +174,7 @@ This section applies to both multi-valued simple attributes (e.g., the `schemas`
     *   **Replace:** If a Client targets a multi-valued attribute path without a filter (e.g., `path: "emails"` or `path: "roles"`) using the `replace` operation, the `value` **MUST** be an array of objects/values. The Service Provider **MUST** replace the entire collection with the provided array.
     *   **Add:** If a Client targets a multi-valued attribute path without a filter using the `add` operation, the `value` **MUST** be an array of objects/values. The Service Provider **MUST** append the provided values to the existing collection.
 2.  **Filtering Constraints:** When using a filter to target an element within a multi-valued complex attribute:
-    * **Sub-attribute Requirement:** The `path` **MUST** target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Targeting the element object itself (e.g., `path: "emails[type eq \"work\"]"`) is **PROHIBITED**.
+    * **Sub-attribute Requirement:** The `path` **MUST** target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients **MUST NOT** target the element object itself (e.g., `path: "emails[type eq \"work\"]"`).
 
 ### Error Handling
 
