@@ -101,7 +101,7 @@ User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User
 
 To ensure strict conformance and prevent unintended data loss or corruption, Service Providers **MUST** adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., `POST`, `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the request **MUST** be rejected.
 
-The Service Provider **MUST** return an HTTP `400 Bad Request` with a `scimType` error of `invalidSyntax` for such requests.
+The Service Provider **MUST** return an HTTP `400 Bad Request` with a `scimType` error of `invalidValue` for such requests. Clients **MUST** consult the `/Schemas` endpoint and **MUST NOT** send attributes or schema URIs that the Service Provider does not advertise there.
 
 ## Canonical Values for Typed Attributes
 
