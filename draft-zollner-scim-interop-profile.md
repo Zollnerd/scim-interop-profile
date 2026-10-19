@@ -187,7 +187,7 @@ Service Providers MUST return `404 Not Found` in response to any operation targe
 
 After a resource is successfully deleted, its unique identifiers (such as `userName`) MUST NOT be considered in uniqueness conflict calculations and MUST be available for reassignment to a new resource.
 
-Service Providers MUST NOT respond to an HTTP `DELETE` request by modifying resource attributes rather than deleting the resource (e.g., setting a User's `active` attribute to `false`). A successful `DELETE` request MUST result in the resource being deleted.
+Service Providers MUST NOT respond to an HTTP `DELETE` request by modifying resource attributes rather than deleting the resource (e.g., setting a User's `active` attribute to `false`).
 
 ## Concurrency and Versioning
 
