@@ -136,7 +136,11 @@ To ensure the reliable handling of large data sets, Service Providers MUST imple
 * Index-based pagination as defined in [RFC7644], Section 3.4.2.4.
 * Cursor-based pagination, as defined in [RFC9865].
 
-If the `count` parameter is omitted from a request, Service Providers SHOULD return at least 100 results by default. Service Providers MUST support a client-requested `count` value of at least 100. Service Providers SHOULD enforce a server-specified maximum number of results per page and MUST return fewer results than requested when the client specifies a `count` value that exceeds that limit.
+Clients MUST support both index-based and cursor-based pagination. When a response contains `nextCursor`, Clients MUST continue retrieving results using it, including when the Client did not send a `cursor` parameter ([RFC9865], Section 2.3). Clients MUST NOT treat a response as the final page unless it indicates so under the pagination method in use.
+
+Service Providers MUST include the `pagination` attribute defined in [RFC9865], Section 4 in their `ServiceProviderConfig` response, including the `cursor` and `index` sub-attributes. A Service Provider that receives a pagination query parameter (`startIndex` or `cursor`) for a method it does not support MUST return an HTTP `400 Bad Request` error and MUST NOT ignore the parameter.
+
+If the `count` parameter is omitted from a request, Service Providers SHOULD return at least 100 results by default. Service Providers MUST support a client-requested `count` value of at least 100. Service Providers SHOULD enforce a server-specified maximum number of results per page and MUST truncate to that maximum, rather than returning an error, when the client specifies a `count` value that exceeds it.
 
 ## Updating Resources
 
