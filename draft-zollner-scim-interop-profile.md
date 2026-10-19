@@ -153,7 +153,7 @@ This profile defines a restricted subset of the SCIM 2.0 `PATCH` method to ensur
 #### Mandatory Use of the 'path' Attribute
 Every operation object within the `Operations` array **MUST** contain a `path` attribute. Clients **MUST NOT** issue "path-less" PATCH operations where the target attribute is implied by the keys within the `value` object.
 
-Service Providers **MUST** reject PATCH requests containing operations that lack a `path` attribute with an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
+Service Providers **MAY** reject PATCH requests containing operations that lack a `path` attribute. A Service Provider that rejects such a request **MUST** return an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
 
 #### Multi-Attribute Updates
 When a Client needs to update multiple attributes in a single HTTP request, it **MUST** provide a separate operation entry within the `Operations` array for each unique attribute path.
@@ -175,13 +175,16 @@ This section applies to both multi-valued simple attributes (e.g., the `schemas`
     *   **Add:** If a Client targets a multi-valued attribute path without a filter using the `add` operation, the `value` **MUST** be an array of objects/values. The Service Provider **MUST** append the provided values to the existing collection.
 2.  **Filtering Constraints:** When using a filter to target an element within a multi-valued complex attribute:
     * **Sub-attribute Requirement:** The `path` **MUST** target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients **MUST NOT** target the element object itself (e.g., `path: "emails[type eq \"work\"]"`).
+    * **Operator Restriction:** Clients **MUST NOT** use filter operators other than `eq` and `and` in a `path` value (e.g., `emails[type co \"work\"].value`).
+    * **Single-Match Requirement:** Clients **MUST NOT** use a filter in a `path` value that matches more than one element of the multi-valued attribute.
 
-### Error Handling
+### PATCH Error Handling
 
-Service Providers **MAY** return an HTTP `400 Bad Request` for any PATCH operation that violates these constraints. Specific `scimType` values should be used as follows:
-* `invalidSyntax`: Missing `path` or use of prohibited operators.
-* `invalidFilter`: Filter matches more than one element in a multi-valued attribute.
-* `invalidPath`: Filter fails to target a specific sub-attribute.
+A Service Provider that rejects a PATCH operation violating the constraints defined in this section **MUST** return an HTTP `400 Bad Request` and **MUST** use the `scimType` values as follows:
+
+* `invalidSyntax`: Missing `path`.
+* `invalidFilter`: Filter uses an operator other than `eq` and `and`.
+* `invalidPath`: Filter fails to target a specific sub-attribute, or filter matches more than one element in a multi-valued attribute.
 
 ## Resource Lifecycle
 
