@@ -27,6 +27,8 @@ normative:
   RFC9325:
   RFC6585:
   RFC9110:
+  RFC8126:
+  RFC8141:
 
 informative:
   RFC6750:
@@ -62,16 +64,13 @@ This profile applies to SCIM 2.0 Service Providers and Clients.
 
 Absolute requirements and prohibitions in this document, expressed using the BCP 14 keywords "MUST", "MUST NOT", "SHALL", "SHALL NOT", and "REQUIRED" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.
 
-Service Providers claiming conformance with this profile MUST include an `interopProfileConformant` attribute with a value of `true` in their `ServiceProviderConfig` response. This attribute is defined as follows:
+Service Providers claiming conformance with this profile MUST include the `conformsTo` attribute, defined below, in their `ServiceProviderConfig` response, and MUST include the identifier of this profile, `urn:ietf:params:scim:profile:interop`, in its `profiles` sub-attribute. A Service Provider MAY list the identifiers of additional profiles it conforms to. A Service Provider that does not conform to this profile MUST NOT include this profile's identifier.
 
-* Name: `interopProfileConformant`
-* Type: Boolean
-* Multi-Valued: false
-* Required: false
-* Mutability: readOnly
-* Returned: default
+A profile identifier is a URI. Identifiers registered with IANA as described in the IANA Considerations section are URNs in the `urn:ietf:params:scim:profile` namespace. Profiles that are not registered MAY be identified by any other URI. Clients MUST ignore profile identifiers they do not recognize.
 
-A Service Provider that does not conform to this profile MUST either omit this attribute or set its value to `false`.
+`conformsTo`: A complex attribute that identifies the profiles the Service Provider conforms to. Singular, optional, mutability `readOnly`, returned `default`.
+
+* `profiles`: A multi-valued list of profile identifiers. Type: String, case exact, required, mutability `readOnly`, returned `default`, uniqueness `none`.
 
 # Data Model Requirements
 
@@ -250,7 +249,21 @@ A Service Provider that does not want these values to be reused SHOULD NOT permi
 
 # IANA Considerations
 
-Prior to being published as an RFC, this document requests that the IANA SCIM Server-Related Schema URIs registry entry for `urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig` be updated to include or reference the `interopProfileConformant` attribute defined in Section 4 of this document.
+## ServiceProviderConfig Schema Registry Entry
+
+IANA is requested to add Section 4 of this document to the References column of the "SCIM Server-Related Schema URIs" registry entry for `urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig`.
+
+## SCIM Profile Identifiers Registry
+
+IANA is requested to create a registry called "SCIM Profile Identifiers" under the "System for Cross-domain Identity Management (SCIM) Schema URIs" registry group at <https://www.iana.org/assignments/scim>. The registration procedure is Specification Required [RFC8126]. Designated experts evaluate registrations for relevance to SCIM-based systems, for duplication or conflict with other profile definitions, and for whether the referenced specification defines conformance clearly enough for independent implementations.
+
+A registration MUST include a profile identifier, a descriptive name, and a reference to the profile's specification. Registered identifiers use the form `urn:ietf:params:scim:profile:{name}`, where `{name}` is an ASCII string that conforms to URN syntax requirements [RFC8141]. Once an identifier has been allocated, it MUST NOT be reallocated for a different purpose. Registration is optional; profiles MAY be identified by unregistered URIs.
+
+The initial contents of the registry are:
+
+| Profile Identifier | Name | Reference |
+|---|---|---|
+| `urn:ietf:params:scim:profile:interop` | SCIM 2.0 Interoperability Profile | Section 4 of this document |
 
 # Acknowledgements
 
