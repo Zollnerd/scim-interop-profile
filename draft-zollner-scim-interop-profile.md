@@ -96,6 +96,7 @@ Common Attributes ([RFC7643], Section 3.1):
 
 User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User resource type is implemented:
 *   `userName`: `caseExact` is `false`. Service Providers **MUST** treat `JSmith` and `jsmith` as equivalent.
+*   `emails.value`: `caseExact` is `false` ([RFC7643], Sections 4.1.2 and 8.7.1). Service Providers **MUST** treat `user@example.com` and `USER@EXAMPLE.COM` as equivalent.
 
 ## Attribute and Schema Handling
 
