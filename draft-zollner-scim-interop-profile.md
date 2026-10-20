@@ -25,6 +25,8 @@ normative:
   RFC7643:
   RFC9865:
   RFC8446:
+  RFC6585:
+  RFC9110:
 
 ---
 
@@ -210,6 +212,12 @@ Support for the `/Bulk` endpoint ([RFC7644], Section 3.7) is OPTIONAL.
 ### Uniqueness Conflicts
 
 When a `POST` or `PATCH` request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like `userName` or `emails`), the Service Provider **MUST** return an HTTP `409 Conflict` response. The response body **MUST** also include a SCIM error detail with the `scimType` set to `uniqueness`, as defined in [RFC7644], Section 3.12.
+
+### Rate Limiting
+
+Service Providers that limit the rate of requests SHOULD respond with HTTP `429 Too Many Requests` ([RFC6585], Section 4) and SHOULD include a `Retry-After` header ([RFC9110], Section 10.2.3) indicating how long the Client should wait before retrying. A Service Provider MAY instead respond with HTTP `503 Service Unavailable` ([RFC9110], Section 15.6.4), which MAY also include a `Retry-After` header.
+
+When a Client receives a `429` or `503` response, it MUST NOT retry the request before the time indicated by the `Retry-After` header has elapsed. If the response does not include a `Retry-After` header, the Client MUST apply a backoff before retrying.
 
 # Security Considerations
 
