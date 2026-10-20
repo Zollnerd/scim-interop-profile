@@ -124,9 +124,9 @@ To aid in troubleshooting and client identification, Clients MUST include a `Use
 
 ## Filtering
 
-The `filter` query parameter MUST be supported. Service Providers MUST support the `eq` and `and` operators. To promote interoperability, Clients MUST NOT use operators other than `eq` and `and`.
+The `filter` query parameter MUST be supported. Service Providers MUST support the `eq` and `and` operators. To promote interoperability, Clients MUST NOT use operators other than `eq` and `and`, whether the filter is sent in the `filter` query parameter of a `GET` request or in the body of a `POST` query to `/.search` ([RFC7644], Section 3.4.3). Service Providers MUST support filtering with the `eq` operator on every attribute for which they enforce a uniqueness constraint (e.g., `userName`), including when that attribute is a sub-attribute of a multi-valued attribute (e.g., `emails.value`), so that Clients can identify the resources involved in a uniqueness conflict.
 
-The use of filters in the URI for any HTTP method other than `GET` (e.g., `PATCH /Users?filter=...`) **MUST NOT** be used.
+Clients **MAY** use filters in read operations: `GET` requests using the `filter` query parameter, and `POST` queries to the `/.search` endpoint with the filter in the request body. Clients **MUST NOT** include a filter in the HTTP request URI of a request that uses any HTTP method other than `GET` (e.g., `PATCH /Users?filter=...`). This restriction applies only to the HTTP request URI. It does not apply to a filter in the `path` attribute of a `PATCH` operation ([RFC7644], Section 3.5.2) or to a filter in the body of a `POST` query to `/.search`.
 
 When a filter expression is applied to a resource-type endpoint (e.g., `/Users`, `/Groups`) and references an attribute not defined in any of that resource type's schemas, Service Providers MUST return an HTTP 400 error with a `scimType` of `invalidFilter`, as defined in [RFC7644], Section 3.12.
 
