@@ -28,6 +28,9 @@ normative:
   RFC6585:
   RFC9110:
 
+informative:
+  RFC6750:
+
 ---
 
 
@@ -45,7 +48,7 @@ Source for this draft and an issue tracker can be found at https://github.com/Zo
 
 # Introduction
 
-The SCIM 2.0 standard [RFC7643] [RFC7644] provides a framework for automating identity provisioning across organizational boundaries. While the base specification's flexibility enables broad applicability, it also permits a wide range of implementation choices — in areas such as `PATCH` syntax, pagination, filtering, case sensitivity, and error handling — that have proven to be common sources of interoperability failure in practice. Where implementations diverge on these points, the result is integrations that require bespoke configuration and maintenance for each pairing.
+The SCIM 2.0 standard [RFC7643], [RFC7644] provides a framework for automating identity provisioning across organizational boundaries. While the base specification's flexibility enables broad applicability, it also permits a wide range of implementation choices — in areas such as `PATCH` syntax, pagination, filtering, case sensitivity, and error handling — that have proven to be common sources of interoperability failure in practice. Where implementations diverge on these points, the result is integrations that require bespoke configuration and maintenance for each pairing.
 
 This document specifies a profile for SCIM 2.0 that addresses these challenges by establishing required capabilities and restricting protocol variations that have proven problematic. Implementations conforming to this profile can be expected to interoperate without integration-specific customization.
 
@@ -93,10 +96,12 @@ To ensure predictable and interoperable behavior, Service Providers MUST impleme
 This profile requires adherence to the case sensitivity definitions specified in [RFC7643] for the following attributes:
 
 Common Attributes ([RFC7643], Section 3.1):
+
 *   `id`: `caseExact` is `true`. Service Providers MUST treat `abc-123` and `ABC-123` as distinct values.
 *   `externalId` (optional): `caseExact` is `true`. Service Providers MUST treat `ABC-123` and `abc-123` as distinct values, if `externalId` is supported.
 
 User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User resource type is implemented:
+
 *   `userName`: `caseExact` is `false`. Service Providers MUST treat `JSmith` and `jsmith` as equivalent.
 *   `emails.value`: `caseExact` is `false` ([RFC7643], Sections 4.1.2 and 8.7.1). Service Providers MUST treat `user@example.com` and `USER@EXAMPLE.COM` as equivalent.
 
@@ -122,7 +127,7 @@ Service Providers MUST use `/{endpoint}/{id}` as the canonical URI for addressin
 
 All data exchange MUST use the JSON format as defined in [RFC7643]. All requests and responses containing SCIM data MUST include a `Content-Type` header with the value `application/scim+json`, as defined in [RFC7644], Section 8.1.
 
-To aid in troubleshooting and client identification, Clients MUST include a `User-Agent` header in all HTTP requests. The header's value should be meaningful, for example, identifying the name of the client software.
+To aid in troubleshooting and client identification, Clients MUST include a `User-Agent` header ([RFC9110], Section 10.1.5) in all HTTP requests. The header's value is expected to identify the client software, for example by name and version.
 
 ## Filtering
 
@@ -213,7 +218,7 @@ Support for the `/Bulk` endpoint ([RFC7644], Section 3.7) is OPTIONAL.
 
 ### Uniqueness Conflicts
 
-When a `POST` or `PATCH` request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like `userName` or `emails`), the Service Provider MUST return an HTTP `409 Conflict` response. The response body MUST also include a SCIM error detail with the `scimType` set to `uniqueness`, as defined in [RFC7644], Section 3.12.
+When a `POST` or `PATCH` request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like `userName` or `emails`), the Service Provider MUST return an HTTP `409 Conflict` response ([RFC9110], Section 15.5.10). The response body MUST also include a SCIM error detail with the `scimType` set to `uniqueness`, as defined in [RFC7644], Section 3.12.
 
 ### Rate Limiting
 
@@ -229,7 +234,7 @@ All communication between a Client and Service Provider MUST be secured using Tr
 
 ## Authentication
 
-The use of HTTP Basic Authentication over TLS is NOT RECOMMENDED.
+The use of HTTP Basic Authentication over TLS is NOT RECOMMENDED. Alternatives include OAuth 2.0 Bearer Tokens [RFC6750].
 
 ## Resource Addressing
 
