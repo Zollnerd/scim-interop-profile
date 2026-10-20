@@ -201,7 +201,9 @@ Service Providers MUST NOT respond to an HTTP `DELETE` request by modifying reso
 
 ## Concurrency and Versioning
 
-Clients **MUST NOT** include HTTP headers related to conditional requests or entity tags (ETags), such as `If-Match`, `If-None-Match`, `If-Modified-Since`, or `If-Unmodified-Since`. Service Providers are not expected to support these headers and **MAY** ignore them or reject the request.
+Clients **MUST NOT** include HTTP headers related to conditional requests or entity tags (ETags), such as `If-Match`, `If-None-Match`, `If-Modified-Since`, or `If-Unmodified-Since`. Service Providers are not expected to support these headers. A Service Provider that does not evaluate a conditional request header **SHOULD** reject the request with HTTP `412 Precondition Failed` rather than ignoring the header, since a Client that sends such a header expects it to be enforced.
+
+This requirement means the profile provides no protection against lost updates when more than one Client modifies the same resource, including multiple identity providers provisioning to the same Service Provider. This is a deliberate trade-off in favor of keeping both Clients and Service Providers simple. Because every `PATCH` operation must include a `path`, a Client's update affects only the attributes it targets.
 
 ## Bulk Operations
 
