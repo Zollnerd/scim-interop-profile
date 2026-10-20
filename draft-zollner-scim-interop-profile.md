@@ -24,7 +24,7 @@ normative:
   RFC7644:
   RFC7643:
   RFC9865:
-  RFC8446:
+  RFC9325:
   RFC6585:
   RFC9110:
 
@@ -225,11 +225,23 @@ When a Client receives a `429` or `503` response, it MUST NOT retry the request 
 
 ## Transport Security
 
-All communication between a Client and Service Provider MUST be secured using Transport Layer Security (TLS) [RFC8446]. Implementations MUST support TLS 1.3 and MAY support TLS 1.2.
+All communication between a Client and Service Provider MUST be secured using Transport Layer Security (TLS). Implementations MUST follow the recommendations in BCP 195 [RFC9325].
 
 ## Authentication
 
 The use of HTTP Basic Authentication over TLS is NOT RECOMMENDED.
+
+## Resource Addressing
+
+This profile requires that resources be addressed by `id` rather than by other attribute values in the URI path. If a resource could also be addressed by a mutable attribute such as `userName`, the value of that attribute could be transferred between resources, and a request addressed to the old value would modify a different resource than the Client intended. For example, User A holds the `userName` "alice" and User B holds the `userName` "bob". If those values are swapped, so that A now holds "bob" and B now holds "alice", a Client issuing `PATCH /Users/alice` with entitlements or role assignments intended for the original User A would instead modify User B. The `id` attribute is assigned by the Service Provider and is stable and non-reassignable ([RFC7643], Section 3.1), which removes this risk.
+
+## Identifier Reuse
+
+Resources have two kinds of identifiers. The `id` attribute is assigned by the Service Provider, is immutable, and is non-reassignable ([RFC7643], Section 3.1). Attributes such as `userName` and `emails.value` are subject to uniqueness constraints but are set by Clients and can usually be changed. Their values can also be reused over time. For example, the `userName` "jsmith" can belong to one person and later, after that person's resource is deleted, to a different person.
+
+A Service Provider that supports the HTTP `DELETE` method makes the unique identifiers of a deleted resource, such as `userName`, available for reassignment to a new resource, as described in the Resource Lifecycle section. Because the values of these attributes can change and be reused, Clients, Service Providers, and other systems SHOULD NOT use them as stable references to a resource, for example as the key for access grants or role assignments. They SHOULD use `id` for that purpose. A record keyed on a reusable value can end up applying to a different person than the one it was created for.
+
+A Service Provider that does not want these values to be reused SHOULD NOT permit the resource to be deleted, and SHOULD instead retain the resource with the `active` attribute set to `false`. The `active` attribute is a Boolean and cannot distinguish a temporarily disabled resource from one that is permanently disabled and retained to prevent reuse of its identifiers.
 
 # IANA Considerations
 
