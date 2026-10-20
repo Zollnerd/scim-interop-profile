@@ -88,23 +88,23 @@ For every `ResourceType` resource returned by the `/ResourceTypes` endpoint, Ser
 
 ## Case Sensitivity
 
-To ensure predictable and interoperable behavior, Service Providers **MUST** implement case sensitivity consistently across both filtering operations and uniqueness constraint enforcement. For any given attribute, the case sensitivity rules applied during a filter query (e.g., `userName eq "User.A"`) **MUST** be identical to the rules used to detect a uniqueness conflict during a `POST` or `PATCH` operation.
+To ensure predictable and interoperable behavior, Service Providers MUST implement case sensitivity consistently across both filtering operations and uniqueness constraint enforcement. For any given attribute, the case sensitivity rules applied during a filter query (e.g., `userName eq "User.A"`) MUST be identical to the rules used to detect a uniqueness conflict during a `POST` or `PATCH` operation.
 
 This profile requires adherence to the case sensitivity definitions specified in [RFC7643] for the following attributes:
 
 Common Attributes ([RFC7643], Section 3.1):
-*   `id`: `caseExact` is `true`. Service Providers **MUST** treat `abc-123` and `ABC-123` as distinct values.
-*   `externalId` (optional): `caseExact` is `true`. Service Providers **MUST** treat `ABC-123` and `abc-123` as distinct values, if `externalId` is supported.
+*   `id`: `caseExact` is `true`. Service Providers MUST treat `abc-123` and `ABC-123` as distinct values.
+*   `externalId` (optional): `caseExact` is `true`. Service Providers MUST treat `ABC-123` and `abc-123` as distinct values, if `externalId` is supported.
 
 User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User resource type is implemented:
-*   `userName`: `caseExact` is `false`. Service Providers **MUST** treat `JSmith` and `jsmith` as equivalent.
-*   `emails.value`: `caseExact` is `false` ([RFC7643], Sections 4.1.2 and 8.7.1). Service Providers **MUST** treat `user@example.com` and `USER@EXAMPLE.COM` as equivalent.
+*   `userName`: `caseExact` is `false`. Service Providers MUST treat `JSmith` and `jsmith` as equivalent.
+*   `emails.value`: `caseExact` is `false` ([RFC7643], Sections 4.1.2 and 8.7.1). Service Providers MUST treat `user@example.com` and `USER@EXAMPLE.COM` as equivalent.
 
 ## Attribute and Schema Handling
 
-To ensure strict conformance and prevent unintended data loss or corruption, Service Providers **MUST** adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., `POST`, `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the request **MUST** be rejected.
+To ensure strict conformance and prevent unintended data loss or corruption, Service Providers MUST adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., `POST`, `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the request MUST be rejected.
 
-The Service Provider **MUST** return an HTTP `400 Bad Request` with a `scimType` error of `invalidValue` for such requests. Clients **MUST** consult the `/Schemas` endpoint and **MUST NOT** send attributes or schema URIs that the Service Provider does not advertise there.
+The Service Provider MUST return an HTTP `400 Bad Request` with a `scimType` error of `invalidValue` for such requests. Clients MUST consult the `/Schemas` endpoint and MUST NOT send attributes or schema URIs that the Service Provider does not advertise there.
 
 ## Canonical Values for Typed Attributes
 
@@ -128,7 +128,7 @@ To aid in troubleshooting and client identification, Clients MUST include a `Use
 
 The `filter` query parameter MUST be supported. Service Providers MUST support the `eq` and `and` operators. To promote interoperability, Clients MUST NOT use operators other than `eq` and `and`, whether the filter is sent in the `filter` query parameter of a `GET` request or in the body of a `POST` query to `/.search` ([RFC7644], Section 3.4.3). Service Providers MUST support filtering with the `eq` operator on every attribute for which they enforce a uniqueness constraint (e.g., `userName`), including when that attribute is a sub-attribute of a multi-valued attribute (e.g., `emails.value`), so that Clients can identify the resources involved in a uniqueness conflict.
 
-Clients **MAY** use filters in read operations: `GET` requests using the `filter` query parameter, and `POST` queries to the `/.search` endpoint with the filter in the request body. Clients **MUST NOT** include a filter in the HTTP request URI of a request that uses any HTTP method other than `GET` (e.g., `PATCH /Users?filter=...`). This restriction applies only to the HTTP request URI. It does not apply to a filter in the `path` attribute of a `PATCH` operation ([RFC7644], Section 3.5.2) or to a filter in the body of a `POST` query to `/.search`.
+Clients MAY use filters in read operations: `GET` requests using the `filter` query parameter, and `POST` queries to the `/.search` endpoint with the filter in the request body. Clients MUST NOT include a filter in the HTTP request URI of a request that uses any HTTP method other than `GET` (e.g., `PATCH /Users?filter=...`). This restriction applies only to the HTTP request URI. It does not apply to a filter in the `path` attribute of a `PATCH` operation ([RFC7644], Section 3.5.2) or to a filter in the body of a `POST` query to `/.search`.
 
 When a filter expression is applied to a resource-type endpoint (e.g., `/Users`, `/Groups`) and references an attribute not defined in any of that resource type's schemas, Service Providers MUST return an HTTP 400 error with a `scimType` of `invalidFilter`, as defined in [RFC7644], Section 3.12.
 
@@ -154,36 +154,36 @@ This profile defines a restricted subset of the SCIM 2.0 `PATCH` method to ensur
 ### General PATCH Constraints
 
 #### Mandatory Use of the 'path' Attribute
-Every operation object within the `Operations` array **MUST** contain a `path` attribute. Clients **MUST NOT** issue "path-less" PATCH operations where the target attribute is implied by the keys within the `value` object.
+Every operation object within the `Operations` array MUST contain a `path` attribute. Clients MUST NOT issue "path-less" PATCH operations where the target attribute is implied by the keys within the `value` object.
 
-Service Providers **MAY** reject PATCH requests containing operations that lack a `path` attribute. A Service Provider that rejects such a request **MUST** return an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
+Service Providers MAY reject PATCH requests containing operations that lack a `path` attribute. A Service Provider that rejects such a request MUST return an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
 
 #### Multi-Attribute Updates
-When a Client needs to update multiple attributes in a single HTTP request, it **MUST** provide a separate operation entry within the `Operations` array for each unique attribute path.
+When a Client needs to update multiple attributes in a single HTTP request, it MUST provide a separate operation entry within the `Operations` array for each unique attribute path.
 
 ### Attribute-Specific Requirements
 
 #### Singular Attributes (Simple and Complex)
-1.  **Simple Attribute Operation Equivalence:** For singular simple attributes (e.g., `userName`, `active`), Service Providers **MUST** treat `add` and `replace` as functionally equivalent.
-2.  **Complex Sub-attribute Targeting:**  When only intending to modify the value of a specific sub-attribute of a complex attribute, Clients **SHOULD** target that sub-attribute using dot-notation (e.g., `path: "name.givenName"`).
+1.  **Simple Attribute Operation Equivalence:** For singular simple attributes (e.g., `userName`, `active`), Service Providers MUST treat `add` and `replace` as functionally equivalent.
+2.  **Complex Sub-attribute Targeting:**  When only intending to modify the value of a specific sub-attribute of a complex attribute, Clients SHOULD target that sub-attribute using dot-notation (e.g., `path: "name.givenName"`).
 3.  **Complex Attribute Operations:**
-    *   **Replace:** If a Client targets a singular complex attribute in its entirety (e.g., `path: "name"`) using the `replace` operation, the `value` **MUST** be a JSON object containing all sub-attributes the Client intends to persist. The Service Provider **MUST** replace the entire complex attribute with the provided object.
-    *   **Add:** If a Client targets a singular complex attribute in its entirety using the `add` operation, the `value` **MUST** be a JSON object. The Service Provider **MUST** perform a partial merge, updating only the provided sub-attributes and preserving existing values for omitted sub-attributes.
+    *   **Replace:** If a Client targets a singular complex attribute in its entirety (e.g., `path: "name"`) using the `replace` operation, the `value` MUST be a JSON object containing all sub-attributes the Client intends to persist. The Service Provider MUST replace the entire complex attribute with the provided object.
+    *   **Add:** If a Client targets a singular complex attribute in its entirety using the `add` operation, the `value` MUST be a JSON object. The Service Provider MUST perform a partial merge, updating only the provided sub-attributes and preserving existing values for omitted sub-attributes.
 
 #### Multi-valued Attributes (Simple and Complex)
 This section applies to both multi-valued simple attributes (e.g., the `schemas` attribute) and multi-valued complex attributes (e.g., `emails`, `addresses`).
 
 1.  **Collection-Level Operations:**
-    *   **Replace:** If a Client targets a multi-valued attribute path without a filter (e.g., `path: "emails"` or `path: "roles"`) using the `replace` operation, the `value` **MUST** be an array of objects/values. The Service Provider **MUST** replace the entire collection with the provided array.
-    *   **Add:** If a Client targets a multi-valued attribute path without a filter using the `add` operation, the `value` **MUST** be an array of objects/values. The Service Provider **MUST** append the provided values to the existing collection.
+    *   **Replace:** If a Client targets a multi-valued attribute path without a filter (e.g., `path: "emails"` or `path: "roles"`) using the `replace` operation, the `value` MUST be an array of objects/values. The Service Provider MUST replace the entire collection with the provided array.
+    *   **Add:** If a Client targets a multi-valued attribute path without a filter using the `add` operation, the `value` MUST be an array of objects/values. The Service Provider MUST append the provided values to the existing collection.
 2.  **Filtering Constraints:** When using a filter to target an element within a multi-valued complex attribute:
-    * **Sub-attribute Requirement:** The `path` **MUST** target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients **MUST NOT** target the element object itself (e.g., `path: "emails[type eq \"work\"]"`).
-    * **Operator Restriction:** Clients **MUST NOT** use filter operators other than `eq` and `and` in a `path` value (e.g., `emails[type co \"work\"].value`).
-    * **Single-Match Requirement:** Clients **MUST NOT** use a filter in a `path` value that matches more than one element of the multi-valued attribute.
+    * **Sub-attribute Requirement:** The `path` MUST target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients MUST NOT target the element object itself (e.g., `path: "emails[type eq \"work\"]"`).
+    * **Operator Restriction:** Clients MUST NOT use filter operators other than `eq` and `and` in a `path` value (e.g., `emails[type co \"work\"].value`).
+    * **Single-Match Requirement:** Clients MUST NOT use a filter in a `path` value that matches more than one element of the multi-valued attribute.
 
 ### PATCH Error Handling
 
-A Service Provider that rejects a PATCH operation violating the constraints defined in this section **MUST** return an HTTP `400 Bad Request` and **MUST** use the `scimType` values as follows:
+A Service Provider that rejects a PATCH operation violating the constraints defined in this section MUST return an HTTP `400 Bad Request` and MUST use the `scimType` values as follows:
 
 * `invalidSyntax`: Missing `path`.
 * `invalidFilter`: Filter uses an operator other than `eq` and `and`.
@@ -191,7 +191,7 @@ A Service Provider that rejects a PATCH operation violating the constraints defi
 
 ## Resource Lifecycle
 
-Service Providers **MUST NOT** treat a `PATCH` request as a deletion of the resource. A resource modified via `PATCH` **MUST** be retained by the Service Provider. Deletion of a resource can only be performed via an HTTP `DELETE` request.
+Service Providers MUST NOT treat a `PATCH` request as a deletion of the resource. A resource modified via `PATCH` MUST be retained by the Service Provider. Deletion of a resource can only be performed via an HTTP `DELETE` request.
 
 Service Providers MUST return `404 Not Found` in response to any operation targeting a deleted resource and MUST omit deleted resources from all query results.
 
@@ -201,7 +201,7 @@ Service Providers MUST NOT respond to an HTTP `DELETE` request by modifying reso
 
 ## Concurrency and Versioning
 
-Clients **MUST NOT** include HTTP headers related to conditional requests or entity tags (ETags), such as `If-Match`, `If-None-Match`, `If-Modified-Since`, or `If-Unmodified-Since`. Service Providers are not expected to support these headers. A Service Provider that does not evaluate a conditional request header **SHOULD** reject the request with HTTP `412 Precondition Failed` rather than ignoring the header, since a Client that sends such a header expects it to be enforced.
+Clients MUST NOT include HTTP headers related to conditional requests or entity tags (ETags), such as `If-Match`, `If-None-Match`, `If-Modified-Since`, or `If-Unmodified-Since`. Service Providers are not expected to support these headers. A Service Provider that does not evaluate a conditional request header SHOULD reject the request with HTTP `412 Precondition Failed` rather than ignoring the header, since a Client that sends such a header expects it to be enforced.
 
 This requirement means the profile provides no protection against lost updates when more than one Client modifies the same resource, including multiple identity providers provisioning to the same Service Provider. This is a deliberate trade-off in favor of keeping both Clients and Service Providers simple. Because every `PATCH` operation must include a `path`, a Client's update affects only the attributes it targets.
 
@@ -213,7 +213,7 @@ Support for the `/Bulk` endpoint ([RFC7644], Section 3.7) is OPTIONAL.
 
 ### Uniqueness Conflicts
 
-When a `POST` or `PATCH` request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like `userName` or `emails`), the Service Provider **MUST** return an HTTP `409 Conflict` response. The response body **MUST** also include a SCIM error detail with the `scimType` set to `uniqueness`, as defined in [RFC7644], Section 3.12.
+When a `POST` or `PATCH` request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like `userName` or `emails`), the Service Provider MUST return an HTTP `409 Conflict` response. The response body MUST also include a SCIM error detail with the `scimType` set to `uniqueness`, as defined in [RFC7644], Section 3.12.
 
 ### Rate Limiting
 
