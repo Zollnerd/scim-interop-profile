@@ -9,24 +9,25 @@
 <meta content="
        This document defines an implementation profile for the System for Cross-domain Identity Management (SCIM) 2.0. In the typical deployment model, an identity provider acting as a SCIM Client provisions and manages identities at multiple downstream service providers, while each service provider (commonly a multi-tenant application serving many customers) accepts provisioning connections from multiple different identity providers. This many-to-many integration model compounds the interoperability challenges arising from the wide range of optional features and implementation variations permitted by the base specification. This profile addresses those challenges by restricting the optional features and protocol variations permitted under the base specification and by establishing normative requirements for a common implementation baseline. 
     " name="description">
-<meta content="xml2rfc 3.32.0" name="generator">
+<meta content="xml2rfc 3.34.1" name="generator">
 <meta content="scim" name="keyword">
 <meta content="provisioning" name="keyword">
 <meta content="identity" name="keyword">
 <meta content="draft-zollner-scim-interop-profile-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.32.0
-    Python 3.12.12
-    ConfigArgParse 1.7
+  xml2rfc 3.34.1
+    Python 3.14.8
+    ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.0.2
-    platformdirs 4.9.4
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.13.4
     pycountry 24.6.1
     PyYAML 6.0.3
-    requests 2.32.5
-    wcwidth 0.6.0
+    requests 2.33.1
+    wcwidth 0.9.2
 -->
 <link href="draft-zollner-scim-interop-profile.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -62,7 +63,6 @@
   src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: italic;
@@ -111,7 +111,6 @@
   src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-
 @font-face {
   font-family: 'Lora';
   font-style: normal;
@@ -176,7 +175,6 @@
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 }
 
 @font-face {
@@ -293,16 +291,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size-adjust: 0.5;
   color: var(--title-color);
 }
-h1#title {
-  font-size: 32px;
-  line-height: 40px;
-  clear: both;
-}
-h1#title, h1#rfcnum {
-  margin: 1.5em 0 0.2em;
-}
-h1#rfcnum + h1#title {
-  margin: 0.2em 0;
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
 }
 
 h1, h2, h3 {
@@ -322,10 +323,10 @@ h4, h5, h6 {
 #abstract+p {
   font-size: 18px;
   line-height: 24px;
-}
-#abstract+p code, #abstract+p samp, #abstract+p tt {
-  font-size: 16px;
-  line-height: 0;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
 }
 
 p {
@@ -336,59 +337,59 @@ p {
 div {
   margin: 0;
 }
-.alignRight.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignRight.art-text pre {
-  padding: 0;
-  width: auto;
-}
 .alignRight {
   margin: 1em 0;
-}
-.alignRight > *:first-child {
-  border: none;
-  margin: 0;
-  float: right;
-  clear: both;
-}
-.alignRight > *:nth-child(2) {
-  clear: both;
-  display: block;
-  border: none;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
 }
 svg {
   display: block;
-}
-/* font-family isn't space-separated, but =~ will have to do */
-svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
-  font-family: var(--font-mono);
-}
-.alignCenter.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignCenter.art-text pre {
-  padding: 0;
-  width: auto;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
 }
 .alignCenter {
   margin: 1em 0;
-}
-.alignCenter > *:first-child {
-  border: none;
-  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
-     support flexbox yet.
-  */
-  display: table;
-  margin: 0 auto;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
 }
 
 /* lists */
@@ -426,26 +427,25 @@ dl {
     --indent: 5ch;
     & > dt {
       min-width: calc(var(--indent) - 2ch);
+      float: none;
     }
-  }
-  &.olPercent > dt {
-    float: none;
   }
 
   dl > dd > & {
     margin-top: 0.5em;
     margin-bottom: 0;
   }
-}
-dl:not(.dlNewline) > dt {
-  float: left;
-  margin-right: 2ch;
-  min-width: 8ch;
-}
-dl > dd {
-  margin-bottom: .8em;
-  margin-left: var(--indent) !important; /* stupid element overrides */
-  min-height: 2ex;
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -461,20 +461,22 @@ dl > dd {
 }
 
 /* links */
-a, a[href].selfRef:hover {
+a {
   text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
 }
-a[href] {
-  color: var(--link-color);
-}
-a[href].selfRef, .iref + a[href].internal {
+.iref + a[href].internal {
   color: var(--text-color);
-}
-a[href]:hover {
-  text-decoration: underline;
-}
-a[href].selfRef:hover {
-  background-color: var(--highlight-color);
 }
 a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
@@ -510,9 +512,9 @@ img {
 figure {
   margin: 0.5em 0;
   padding: 0;
-}
-figure blockquote {
-  margin: 0.8em 0.4em 0.4em;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
 }
 figcaption, caption {
   font-style: italic;
@@ -522,17 +524,19 @@ figcaption, caption {
 }
 @media screen {
   /* Auto-collapse boilerplate. */
-  :is(#status-of-memo, #copyright) p {
-    margin: -2px 0;
-    max-height: 0;
-    transition: max-height 2s ease, margin 0.5s ease 0.5s;
-    overflow: hidden;
-  }
-  :is(#status-of-memo, #copyright):hover p,
-  :is(#status-of-memo, #copyright) h2:target ~ p {
-    margin: 0.5em 0;
-    max-height: 500px;
-    overflow: auto;
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
   }
   pre, svg {
     display: inline-block;
@@ -582,25 +586,17 @@ table {
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
-}
-table.right {
-  margin-left: auto;
-}
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-}
-table.left {
-  margin-right: auto;
-}
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
 }
 
 thead, tbody {
@@ -620,13 +616,6 @@ th {
 :is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
   background-color: var(--highlight-color);
 }
-table caption {
-  margin: 0;
-  padding: 3px 0 3px 1em;
-}
-table p {
-  margin: 0;
-}
 
 /* pilcrow */
 a.pilcrow {
@@ -637,18 +626,16 @@ a.pilcrow {
     color: var(--pilcrow-weak);
     &:hover { text-decoration: none; }
   }
-}
-@media not print {
-  :hover > a.pilcrow, a.pilcrow:focus {
-    opacity: 1;
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
   }
-  a.pilcrow[href]:hover {
-    color: var(--pilcrow-strong);
-    background-color: transparent;
-  }
-}
-@media print {
-  a.pilcrow {
+  @media print {
     display: none;
   }
 }
@@ -707,9 +694,9 @@ sub, sup {
   font-size: 0.9em;
   font-style: italic;
   margin-top: 2em;
-}
-.docInfo .prepared {
-  float: right;
+  & .prepared {
+    float: right;
+  }
 }
 
 /* table of contents */
@@ -799,23 +786,27 @@ hr.addr {
   max-width: calc(100% - 16px);
 }
 @media (min-width: 500px) {
-  #authors-addresses > section {
-    column-count: 2;
-    column-gap: 20px;
-  }
-  #authors-addresses > section > h2 {
-    column-span: all;
-  }
-  /* hack for break-inside: avoid-column */
-  #authors-addresses address {
-    display: inline-block;
-    break-inside: avoid-column;
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
   }
 }
 
 /* Comments */
-.rfcEditorRemove p:first-of-type {
-  font-style: italic;
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
 }
 .cref {
   background-color: rgba(249, 232, 105, 0.3);
@@ -826,19 +817,21 @@ hr.addr {
 }
 
 @media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
-    & > ul { margin-bottom: 2em; }
-    & ul {
-      margin: 0 0 0 4px;
-      & :is(p, li) {
-        margin: 2px 0;
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
       }
     }
-  }
-  #toc a.toplink {
-    float: right;
+    & a.toplink {
+      float: right;
+    }
   }
 }
 @media not screen {
@@ -859,54 +852,54 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 2px 0 2px 6px;
-    padding-right: 1em;
-    font-size: 18px;
-    line-height: 24px;
-    min-width: 190px;
-    text-align: right;
-    background-color: #444;
-    color: white;
-    cursor: pointer;
-    &::before { /* css hamburger */
-      float: right;
-      position: relative;
-      width: 1em;
-      height: 1px;
-      left: -164px;
-      margin: 8px 0 0 0;
-      background: white none repeat scroll 0 0;
-      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-      content: "";
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
     }
-  }
-  #toc nav {
-    display: none;
-    background-color: var(--background-color);
-    padding: 0.5em 1em 1em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    height: calc(100vh - 48px);
-    border-left: 1px solid #ddd;
-  }
-  #toc.active {
-    opacity: 1;
-    & nav { display: block; }
-  }
-  /* Make the collapsed ToC header render white on gray also when it's a link */
-  #toc h2 a,
-  #toc h2 a:is(:link, :focus, :hover),
-  #toc a.toplink,
-  #toc a.toplink:hover {
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-  }
-  #toc a.toplink {
-    margin: 2px 0.5em 0;
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
   }
 }
 
@@ -925,26 +918,26 @@ hr.addr {
     margin: 0;
     padding: 0;
     z-index: 1;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 0.25em 1em 1em 0;
-  }
-  #toc nav {
-    display: block;
-    height: calc(90vh - 84px);
-    bottom: 0;
-    padding: 0.5em 0 2em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
   }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
-  }
-  #toc a.toplink {
-    margin: 8px 0.5em 0;
   }
 }
 
@@ -960,12 +953,13 @@ hr.addr {
   #n-copyright-notice {
     border-bottom: none;
   }
-  #toc, #n-introduction {
-    page-break-before: always;
-  }
   #toc {
+    page-break-before: always;
     border-top: none;
     padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
   }
   figure, pre, .vcard {
     page-break-inside: avoid;
@@ -1027,17 +1021,19 @@ hr.addr {
 }
 
 /* SVG Trick: a prefix match works because only black and white are allowed */
-svg :is([stroke="black"], [stroke^="#000"]) {
-  stroke: var(--text-color);
-}
-svg :is([stroke="white"], [stroke^="#fff"]) {
-  stroke: var(--background-color);
-}
-svg :is([fill="black"], [fill^="#000"], :not([fill])) {
-  fill: var(--text-color);
-}
-svg :is([fill="white"], [fill^="#fff"]) {
-  fill: var(--background-color);
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
 }
 </style>
 
@@ -1047,11 +1043,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">SCIM Interop Profile</td>
-<td class="right">April 2026</td>
+<td class="right">October 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Zollner</td>
-<td class="center">Expires 17 October 2026</td>
+<td class="center">Expires 23 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1064,12 +1060,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-zollner-scim-interop-profile-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-04-15" class="published">15 April 2026</time>
+<time datetime="2026-10-20" class="published">20 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-10-17">17 October 2026</time></dd>
+<dd class="expires"><time datetime="2027-04-23">23 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1103,7 +1099,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 17 October 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 23 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1186,7 +1182,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                     <p id="section-toc.1-1.6.2.5.2.2.1"><a href="#section-6.5.2" class="auto internal xref">6.5.2</a>.  <a href="#name-attribute-specific-requirem" class="internal xref">Attribute-Specific Requirements</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5.2.3">
-                    <p id="section-toc.1-1.6.2.5.2.3.1"><a href="#section-6.5.3" class="auto internal xref">6.5.3</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
+                    <p id="section-toc.1-1.6.2.5.2.3.1"><a href="#section-6.5.3" class="auto internal xref">6.5.3</a>.  <a href="#name-patch-error-handling" class="internal xref">PATCH Error Handling</a></p>
 </li>
                 </ul>
 </li>
@@ -1200,10 +1196,13 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.6.2.8.1"><a href="#section-6.8" class="auto internal xref">6.8</a>.  <a href="#name-bulk-operations" class="internal xref">Bulk Operations</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.9">
-                <p id="section-toc.1-1.6.2.9.1"><a href="#section-6.9" class="auto internal xref">6.9</a>.  <a href="#name-error-handling-2" class="internal xref">Error Handling</a></p>
+                <p id="section-toc.1-1.6.2.9.1"><a href="#section-6.9" class="auto internal xref">6.9</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.9.2.1">
                     <p id="section-toc.1-1.6.2.9.2.1.1"><a href="#section-6.9.1" class="auto internal xref">6.9.1</a>.  <a href="#name-uniqueness-conflicts" class="internal xref">Uniqueness Conflicts</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.9.2.2">
+                    <p id="section-toc.1-1.6.2.9.2.2.1"><a href="#section-6.9.2" class="auto internal xref">6.9.2</a>.  <a href="#name-rate-limiting" class="internal xref">Rate Limiting</a></p>
 </li>
                 </ul>
 </li>
@@ -1218,16 +1217,38 @@ svg :is([fill="white"], [fill^="#fff"]) {
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
                 <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-authentication" class="internal xref">Authentication</a></p>
 </li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-resource-addressing" class="internal xref">Resource Addressing</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-identifier-reuse" class="internal xref">Identifier Reuse</a></p>
+</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
             <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-serviceproviderconfig-schem" class="internal xref">ServiceProviderConfig Schema Registry Entry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-scim-profile-identifiers-re" class="internal xref">SCIM Profile Identifiers Registry</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
             <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-acknowledgements" class="internal xref">Acknowledgements</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
             <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
@@ -1250,7 +1271,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-2" class="section-number selfRef">2. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-2-1">The SCIM 2.0 standard <span><a href="#RFC7644" class="internal xref">RFC7643</a> [<a href="#RFC7644" class="cite xref">RFC7644</a>]</span> provides a framework for automating identity provisioning across organizational boundaries. While the base specification's flexibility enables broad applicability, it also permits a wide range of implementation choices — in areas such as <code>PATCH</code> syntax, pagination, filtering, case sensitivity, and error handling — that have proven to be common sources of interoperability failure in practice. Where implementations diverge on these points, the result is integrations that require bespoke configuration and maintenance for each pairing.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-1">The SCIM 2.0 standard <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span> provides a framework for automating identity provisioning across organizational boundaries. While the base specification's flexibility enables broad applicability, it also permits a wide range of implementation choices — in areas such as <code>PATCH</code> syntax, pagination, filtering, case sensitivity, and error handling — that have proven to be common sources of interoperability failure in practice. Where implementations diverge on these points, the result is integrations that require bespoke configuration and maintenance for each pairing.<a href="#section-2-1" class="pilcrow">¶</a></p>
 <p id="section-2-2">This document specifies a profile for SCIM 2.0 that addresses these challenges by establishing required capabilities and restricting protocol variations that have proven problematic. Implementations conforming to this profile can be expected to interoperate without integration-specific customization.<a href="#section-2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1271,29 +1292,15 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-scope-and-conformance" class="section-name selfRef">Scope and Conformance</a>
       </h2>
 <p id="section-4-1">This profile applies to SCIM 2.0 Service Providers and Clients.<a href="#section-4-1" class="pilcrow">¶</a></p>
-<p id="section-4-2">Requirements in this document, expressed using the normative terms "<span class="bcp14">MUST</span>", "<span class="bcp14">SHALL</span>", and "<span class="bcp14">REQUIRED</span>" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.<a href="#section-4-2" class="pilcrow">¶</a></p>
-<p id="section-4-3">Service Providers claiming conformance with this profile <span class="bcp14">MUST</span> include an <code>interopProfileConformant</code> attribute with a value of <code>true</code> in their <code>ServiceProviderConfig</code> response. This attribute is defined as follows:<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-2">Absolute requirements and prohibitions in this document, expressed using the BCP 14 keywords "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", and "<span class="bcp14">REQUIRED</span>" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3">Service Providers claiming conformance with this profile <span class="bcp14">MUST</span> include the <code>conformsTo</code> attribute, defined below, in their <code>ServiceProviderConfig</code> response, and <span class="bcp14">MUST</span> include the identifier of this profile, <code>urn:ietf:params:scim:profile:interop</code>, in its <code>profiles</code> sub-attribute. A Service Provider <span class="bcp14">MAY</span> list the identifiers of additional profiles it conforms to. A Service Provider that does not conform to this profile <span class="bcp14">MUST NOT</span> include this profile's identifier.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<p id="section-4-4">A profile identifier is a URI. Identifiers registered with IANA as described in the IANA Considerations section are URNs in the <code>urn:ietf:params:scim:profile</code> namespace. Profiles that are not registered <span class="bcp14">MAY</span> be identified by any other URI. Clients <span class="bcp14">MUST</span> ignore profile identifiers they do not recognize.<a href="#section-4-4" class="pilcrow">¶</a></p>
+<p id="section-4-5"><code>conformsTo</code>: A complex attribute that identifies the profiles the Service Provider conforms to. Singular, optional, mutability <code>readOnly</code>, returned <code>default</code>.<a href="#section-4-5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4-4.1">
-          <p id="section-4-4.1.1">Name: <code>interopProfileConformant</code><a href="#section-4-4.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-4.2">
-          <p id="section-4-4.2.1">Type: Boolean<a href="#section-4-4.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-4.3">
-          <p id="section-4-4.3.1">Multi-Valued: false<a href="#section-4-4.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-4.4">
-          <p id="section-4-4.4.1">Required: false<a href="#section-4-4.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-4.5">
-          <p id="section-4-4.5.1">Mutability: readOnly<a href="#section-4-4.5.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-4-4.6">
-          <p id="section-4-4.6.1">Returned: default<a href="#section-4-4.6.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-4-6.1">
+          <p id="section-4-6.1.1"><code>profiles</code>: A multi-valued list of profile identifiers. Type: String, case exact, required, mutability <code>readOnly</code>, returned <code>default</code>, uniqueness <code>none</code>.<a href="#section-4-6.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-4-5">A Service Provider that does not conform to this profile <span class="bcp14">MUST</span> either omit this attribute or set its value to <code>false</code>.<a href="#section-4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="data-model-requirements">
@@ -1328,13 +1335,26 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-case-sensitivity">
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-case-sensitivity" class="section-name selfRef">Case Sensitivity</a>
         </h3>
-<p id="section-5.2-1">To ensure predictable and interoperable behavior, Service Providers <strong><span class="bcp14">MUST</span></strong> implement case sensitivity consistently across both filtering operations and uniqueness constraint enforcement. For any given attribute, the case sensitivity rules applied during a filter query (e.g., <code>userName eq "User.A"</code>) <strong><span class="bcp14">MUST</span></strong> be identical to the rules used to detect a uniqueness conflict during a <code>POST</code> or <code>PATCH</code> operation.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-1">To ensure predictable and interoperable behavior, Service Providers <span class="bcp14">MUST</span> implement case sensitivity consistently across both filtering operations and uniqueness constraint enforcement. For any given attribute, the case sensitivity rules applied during a filter query (e.g., <code>userName eq "User.A"</code>) <span class="bcp14">MUST</span> be identical to the rules used to detect a uniqueness conflict during a <code>POST</code> or <code>PATCH</code> operation.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.2-2">This profile requires adherence to the case sensitivity definitions specified in <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span> for the following attributes:<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-<p id="section-5.2-3">Common Attributes (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 3.1):
-*   <code>id</code>: <code>caseExact</code> is <code>true</code>. Service Providers <strong><span class="bcp14">MUST</span></strong> treat <code>abc-123</code> and <code>ABC-123</code> as distinct values.
-*   <code>externalId</code> (optional): <code>caseExact</code> is <code>true</code>. Service Providers <strong><span class="bcp14">MUST</span></strong> treat <code>ABC-123</code> and <code>abc-123</code> as distinct values, if <code>externalId</code> is supported.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4">User Schema Attributes (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 4.1.1) -- applicable only if the User resource type is implemented:
-*   <code>userName</code>: <code>caseExact</code> is <code>false</code>. Service Providers <strong><span class="bcp14">MUST</span></strong> treat <code>JSmith</code> and <code>jsmith</code> as equivalent.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+<p id="section-5.2-3">Common Attributes (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 3.1):<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-4.1">
+            <p id="section-5.2-4.1.1"><code>id</code>: <code>caseExact</code> is <code>true</code>. Service Providers <span class="bcp14">MUST</span> treat <code>abc-123</code> and <code>ABC-123</code> as distinct values.<a href="#section-5.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-4.2">
+            <p id="section-5.2-4.2.1"><code>externalId</code> (optional): <code>caseExact</code> is <code>true</code>. Service Providers <span class="bcp14">MUST</span> treat <code>ABC-123</code> and <code>abc-123</code> as distinct values, if <code>externalId</code> is supported.<a href="#section-5.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.2-5">User Schema Attributes (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 4.1.1) -- applicable only if the User resource type is implemented:<a href="#section-5.2-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-6.1">
+            <p id="section-5.2-6.1.1"><code>userName</code>: <code>caseExact</code> is <code>false</code>. Service Providers <span class="bcp14">MUST</span> treat <code>JSmith</code> and <code>jsmith</code> as equivalent.<a href="#section-5.2-6.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-6.2">
+            <p id="section-5.2-6.2.1"><code>emails.value</code>: <code>caseExact</code> is <code>false</code> (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Sections 4.1.2 and 8.7.1). Service Providers <span class="bcp14">MUST</span> treat <code>user@example.com</code> and <code>USER@EXAMPLE.COM</code> as equivalent.<a href="#section-5.2-6.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
 </section>
 </div>
 <div id="attribute-and-schema-handling">
@@ -1342,8 +1362,8 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-attribute-and-schema-handli">
 <a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-attribute-and-schema-handli" class="section-name selfRef">Attribute and Schema Handling</a>
         </h3>
-<p id="section-5.3-1">To ensure strict conformance and prevent unintended data loss or corruption, Service Providers <strong><span class="bcp14">MUST</span></strong> adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., <code>POST</code>, <code>PATCH</code>) contains attributes or schema URIs that are not defined in the Service Provider's <code>ResourceType</code> or <code>Schema</code> definitions, the request <strong><span class="bcp14">MUST</span></strong> be rejected.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
-<p id="section-5.3-2">The Service Provider <strong><span class="bcp14">MUST</span></strong> return an HTTP <code>400 Bad Request</code> with a <code>scimType</code> error of <code>invalidSyntax</code> for such requests.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
+<p id="section-5.3-1">To ensure strict conformance and prevent unintended data loss or corruption, Service Providers <span class="bcp14">MUST</span> adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., <code>POST</code>, <code>PATCH</code>) contains attributes or schema URIs that are not defined in the Service Provider's <code>ResourceType</code> or <code>Schema</code> definitions, the request <span class="bcp14">MUST</span> be rejected.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-2">The Service Provider <span class="bcp14">MUST</span> return an HTTP <code>400 Bad Request</code> with a <code>scimType</code> error of <code>invalidValue</code> for such requests. Clients <span class="bcp14">MUST</span> consult the <code>/Schemas</code> endpoint and <span class="bcp14">MUST NOT</span> send attributes or schema URIs that the Service Provider does not advertise there.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="canonical-values-for-typed-attributes">
@@ -1376,7 +1396,7 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-data-format-and-http-header" class="section-name selfRef">Data Format and HTTP Headers</a>
         </h3>
 <p id="section-6.2-1">All data exchange <span class="bcp14">MUST</span> use the JSON format as defined in <span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>. All requests and responses containing SCIM data <span class="bcp14">MUST</span> include a <code>Content-Type</code> header with the value <code>application/scim+json</code>, as defined in <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 8.1.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
-<p id="section-6.2-2">To aid in troubleshooting and client identification, Clients <span class="bcp14">MUST</span> include a <code>User-Agent</code> header in all HTTP requests. The header's value should be meaningful, for example, identifying the name of the client software.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">To aid in troubleshooting and client identification, Clients <span class="bcp14">MUST</span> include a <code>User-Agent</code> header (<span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, Section 10.1.5) in all HTTP requests. The header's value is expected to identify the client software, for example by name and version.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="filtering">
@@ -1384,8 +1404,8 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-filtering">
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-filtering" class="section-name selfRef">Filtering</a>
         </h3>
-<p id="section-6.3-1">The <code>filter</code> query parameter <span class="bcp14">MUST</span> be supported. Service Providers <span class="bcp14">MUST</span> support the <code>eq</code> and <code>and</code> operators. To promote interoperability, Clients <span class="bcp14">MUST NOT</span> use operators other than <code>eq</code> and <code>and</code>.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<p id="section-6.3-2">The use of filters in the URI for any HTTP method other than <code>GET</code> (e.g., <code>PATCH /Users?filter=...</code>) <strong><span class="bcp14">MUST NOT</span></strong> be used.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-1">The <code>filter</code> query parameter <span class="bcp14">MUST</span> be supported. Service Providers <span class="bcp14">MUST</span> support the <code>eq</code> and <code>and</code> operators. To promote interoperability, Clients <span class="bcp14">MUST NOT</span> use operators other than <code>eq</code> and <code>and</code>, whether the filter is sent in the <code>filter</code> query parameter of a <code>GET</code> request or in the body of a <code>POST</code> query to <code>/.search</code> (<span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.4.3). Service Providers <span class="bcp14">MUST</span> support filtering with the <code>eq</code> operator on every attribute for which they enforce a uniqueness constraint (e.g., <code>userName</code>), including when that attribute is a sub-attribute of a multi-valued attribute (e.g., <code>emails.value</code>), so that Clients can identify the resources involved in a uniqueness conflict.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">Clients <span class="bcp14">MAY</span> use filters in read operations: <code>GET</code> requests using the <code>filter</code> query parameter, and <code>POST</code> queries to the <code>/.search</code> endpoint with the filter in the request body. Clients <span class="bcp14">MUST NOT</span> include a filter in the HTTP request URI of a request that uses any HTTP method other than <code>GET</code> (e.g., <code>PATCH /Users?filter=...</code>). This restriction applies only to the HTTP request URI. It does not apply to a filter in the <code>path</code> attribute of a <code>PATCH</code> operation (<span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.5.2) or to a filter in the body of a <code>POST</code> query to <code>/.search</code>.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 <p id="section-6.3-3">When a filter expression is applied to a resource-type endpoint (e.g., <code>/Users</code>, <code>/Groups</code>) and references an attribute not defined in any of that resource type's schemas, Service Providers <span class="bcp14">MUST</span> return an HTTP 400 error with a <code>scimType</code> of <code>invalidFilter</code>, as defined in <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.12.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1403,7 +1423,9 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
             <p id="section-6.4-2.2.1">Cursor-based pagination, as defined in <span>[<a href="#RFC9865" class="cite xref">RFC9865</a>]</span>.<a href="#section-6.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.4-3">If the <code>count</code> parameter is omitted from a request, Service Providers <span class="bcp14">SHOULD</span> return at least 100 results by default. Service Providers <span class="bcp14">MUST</span> support a client-requested <code>count</code> value of at least 100. Service Providers <span class="bcp14">SHOULD</span> enforce a server-specified maximum number of results per page and <span class="bcp14">MUST</span> return fewer results than requested when the client specifies a <code>count</code> value that exceeds that limit.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<p id="section-6.4-3">Clients <span class="bcp14">MUST</span> support both index-based and cursor-based pagination. When a response contains <code>nextCursor</code>, Clients <span class="bcp14">MUST</span> continue retrieving results using it, including when the Client did not send a <code>cursor</code> parameter (<span>[<a href="#RFC9865" class="cite xref">RFC9865</a>]</span>, Section 2.3). Clients <span class="bcp14">MUST NOT</span> treat a response as the final page unless it indicates so under the pagination method in use.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<p id="section-6.4-4">Service Providers <span class="bcp14">MUST</span> include the <code>pagination</code> attribute defined in <span>[<a href="#RFC9865" class="cite xref">RFC9865</a>]</span>, Section 4 in their <code>ServiceProviderConfig</code> response, including the <code>cursor</code> and <code>index</code> sub-attributes. A Service Provider that receives a pagination query parameter (<code>startIndex</code> or <code>cursor</code>) for a method it does not support <span class="bcp14">MUST</span> return an HTTP <code>400 Bad Request</code> error and <span class="bcp14">MUST NOT</span> ignore the parameter.<a href="#section-6.4-4" class="pilcrow">¶</a></p>
+<p id="section-6.4-5">If the <code>count</code> parameter is omitted from a request, Service Providers <span class="bcp14">SHOULD</span> return at least 100 results by default. Service Providers <span class="bcp14">MUST</span> support a client-requested <code>count</code> value of at least 100. Service Providers <span class="bcp14">SHOULD</span> enforce a server-specified maximum number of results per page and <span class="bcp14">MUST</span> truncate to that maximum, rather than returning an error, when the client specifies a <code>count</code> value that exceeds it.<a href="#section-6.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="updating-resources">
@@ -1423,8 +1445,8 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
             <h5 id="name-mandatory-use-of-the-path-a">
 <a href="#section-6.5.1.1" class="section-number selfRef">6.5.1.1. </a><a href="#name-mandatory-use-of-the-path-a" class="section-name selfRef">Mandatory Use of the 'path' Attribute</a>
             </h5>
-<p id="section-6.5.1.1-1">Every operation object within the <code>Operations</code> array <strong><span class="bcp14">MUST</span></strong> contain a <code>path</code> attribute. Clients <strong><span class="bcp14">MUST NOT</span></strong> issue "path-less" PATCH operations where the target attribute is implied by the keys within the <code>value</code> object.<a href="#section-6.5.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.5.1.1-2">Service Providers <strong><span class="bcp14">MUST</span></strong> reject PATCH requests containing operations that lack a <code>path</code> attribute with an HTTP <code>400 Bad Request</code> and a <code>scimType</code> error of <code>invalidSyntax</code>.<a href="#section-6.5.1.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.5.1.1-1">Every operation object within the <code>Operations</code> array <span class="bcp14">MUST</span> contain a <code>path</code> attribute. Clients <span class="bcp14">MUST NOT</span> issue "path-less" PATCH operations where the target attribute is implied by the keys within the <code>value</code> object.<a href="#section-6.5.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.1.1-2">Service Providers <span class="bcp14">MAY</span> reject PATCH requests containing operations that lack a <code>path</code> attribute. A Service Provider that rejects such a request <span class="bcp14">MUST</span> return an HTTP <code>400 Bad Request</code> and a <code>scimType</code> error of <code>invalidSyntax</code>.<a href="#section-6.5.1.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="multi-attribute-updates">
@@ -1432,7 +1454,7 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
             <h5 id="name-multi-attribute-updates">
 <a href="#section-6.5.1.2" class="section-number selfRef">6.5.1.2. </a><a href="#name-multi-attribute-updates" class="section-name selfRef">Multi-Attribute Updates</a>
             </h5>
-<p id="section-6.5.1.2-1">When a Client needs to update multiple attributes in a single HTTP request, it <strong><span class="bcp14">MUST</span></strong> provide a separate operation entry within the <code>Operations</code> array for each unique attribute path.<a href="#section-6.5.1.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.1.2-1">When a Client needs to update multiple attributes in a single HTTP request, it <span class="bcp14">MUST</span> provide a separate operation entry within the <code>Operations</code> array for each unique attribute path.<a href="#section-6.5.1.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1449,19 +1471,19 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
             </h5>
 <ol start="1" type="1" class="normal type-1" id="section-6.5.2.1-1">
 <li id="section-6.5.2.1-1.1">
-                <p id="section-6.5.2.1-1.1.1"><strong>Simple Attribute Operation Equivalence:</strong> For singular simple attributes (e.g., <code>userName</code>, <code>active</code>), Service Providers <strong><span class="bcp14">MUST</span></strong> treat <code>add</code> and <code>replace</code> as functionally equivalent.<a href="#section-6.5.2.1-1.1.1" class="pilcrow">¶</a></p>
+                <p id="section-6.5.2.1-1.1.1"><strong>Simple Attribute Operation Equivalence:</strong> For singular simple attributes (e.g., <code>userName</code>, <code>active</code>), Service Providers <span class="bcp14">MUST</span> treat <code>add</code> and <code>replace</code> as functionally equivalent.<a href="#section-6.5.2.1-1.1.1" class="pilcrow">¶</a></p>
 </li>
               <li id="section-6.5.2.1-1.2">
-                <p id="section-6.5.2.1-1.2.1"><strong>Complex Sub-attribute Targeting:</strong>  When only intending to modify the value of a specific sub-attribute of a complex attribute, Clients <strong><span class="bcp14">SHOULD</span></strong> target that sub-attribute using dot-notation (e.g., <code>path: "name.givenName"</code>).<a href="#section-6.5.2.1-1.2.1" class="pilcrow">¶</a></p>
+                <p id="section-6.5.2.1-1.2.1"><strong>Complex Sub-attribute Targeting:</strong>  When only intending to modify the value of a specific sub-attribute of a complex attribute, Clients <span class="bcp14">SHOULD</span> target that sub-attribute using dot-notation (e.g., <code>path: "name.givenName"</code>).<a href="#section-6.5.2.1-1.2.1" class="pilcrow">¶</a></p>
 </li>
               <li id="section-6.5.2.1-1.3">
                 <p id="section-6.5.2.1-1.3.1"><strong>Complex Attribute Operations:</strong><a href="#section-6.5.2.1-1.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.5.2.1-1.3.2.1">
-                    <p id="section-6.5.2.1-1.3.2.1.1"><strong>Replace:</strong> If a Client targets a singular complex attribute in its entirety (e.g., <code>path: "name"</code>) using the <code>replace</code> operation, the <code>value</code> <strong><span class="bcp14">MUST</span></strong> be a JSON object containing all sub-attributes the Client intends to persist. The Service Provider <strong><span class="bcp14">MUST</span></strong> replace the entire complex attribute with the provided object.<a href="#section-6.5.2.1-1.3.2.1.1" class="pilcrow">¶</a></p>
+                    <p id="section-6.5.2.1-1.3.2.1.1"><strong>Replace:</strong> If a Client targets a singular complex attribute in its entirety (e.g., <code>path: "name"</code>) using the <code>replace</code> operation, the <code>value</code> <span class="bcp14">MUST</span> be a JSON object containing all sub-attributes the Client intends to persist. The Service Provider <span class="bcp14">MUST</span> replace the entire complex attribute with the provided object.<a href="#section-6.5.2.1-1.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
                   <li class="normal" id="section-6.5.2.1-1.3.2.2">
-                    <p id="section-6.5.2.1-1.3.2.2.1"><strong>Add:</strong> If a Client targets a singular complex attribute in its entirety using the <code>add</code> operation, the <code>value</code> <strong><span class="bcp14">MUST</span></strong> be a JSON object. The Service Provider <strong><span class="bcp14">MUST</span></strong> perform a partial merge, updating only the provided sub-attributes and preserving existing values for omitted sub-attributes.<a href="#section-6.5.2.1-1.3.2.2.1" class="pilcrow">¶</a></p>
+                    <p id="section-6.5.2.1-1.3.2.2.1"><strong>Add:</strong> If a Client targets a singular complex attribute in its entirety using the <code>add</code> operation, the <code>value</code> <span class="bcp14">MUST</span> be a JSON object. The Service Provider <span class="bcp14">MUST</span> perform a partial merge, updating only the provided sub-attributes and preserving existing values for omitted sub-attributes.<a href="#section-6.5.2.1-1.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
 </li>
@@ -1479,10 +1501,10 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
                 <p id="section-6.5.2.2-2.1.1"><strong>Collection-Level Operations:</strong><a href="#section-6.5.2.2-2.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.5.2.2-2.1.2.1">
-                    <p id="section-6.5.2.2-2.1.2.1.1"><strong>Replace:</strong> If a Client targets a multi-valued attribute path without a filter (e.g., <code>path: "emails"</code> or <code>path: "roles"</code>) using the <code>replace</code> operation, the <code>value</code> <strong><span class="bcp14">MUST</span></strong> be an array of objects/values. The Service Provider <strong><span class="bcp14">MUST</span></strong> replace the entire collection with the provided array.<a href="#section-6.5.2.2-2.1.2.1.1" class="pilcrow">¶</a></p>
+                    <p id="section-6.5.2.2-2.1.2.1.1"><strong>Replace:</strong> If a Client targets a multi-valued attribute path without a filter (e.g., <code>path: "emails"</code> or <code>path: "roles"</code>) using the <code>replace</code> operation, the <code>value</code> <span class="bcp14">MUST</span> be an array of objects/values. The Service Provider <span class="bcp14">MUST</span> replace the entire collection with the provided array.<a href="#section-6.5.2.2-2.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
                   <li class="normal" id="section-6.5.2.2-2.1.2.2">
-                    <p id="section-6.5.2.2-2.1.2.2.1"><strong>Add:</strong> If a Client targets a multi-valued attribute path without a filter using the <code>add</code> operation, the <code>value</code> <strong><span class="bcp14">MUST</span></strong> be an array of objects/values. The Service Provider <strong><span class="bcp14">MUST</span></strong> append the provided values to the existing collection.<a href="#section-6.5.2.2-2.1.2.2.1" class="pilcrow">¶</a></p>
+                    <p id="section-6.5.2.2-2.1.2.2.1"><strong>Add:</strong> If a Client targets a multi-valued attribute path without a filter using the <code>add</code> operation, the <code>value</code> <span class="bcp14">MUST</span> be an array of objects/values. The Service Provider <span class="bcp14">MUST</span> append the provided values to the existing collection.<a href="#section-6.5.2.2-2.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
 </li>
@@ -1490,7 +1512,13 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
                 <p id="section-6.5.2.2-2.2.1"><strong>Filtering Constraints:</strong> When using a filter to target an element within a multi-valued complex attribute:<a href="#section-6.5.2.2-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.5.2.2-2.2.2.1">
-                    <p id="section-6.5.2.2-2.2.2.1.1"><strong>Sub-attribute Requirement:</strong> The <code>path</code> <strong><span class="bcp14">MUST</span></strong> target a specific sub-attribute of the matched element (e.g., <code>path: "emails[type eq \"work\"].value"</code>). Targeting the element object itself (e.g., <code>path: "emails[type eq \"work\"]"</code>) is <strong>PROHIBITED</strong>.<a href="#section-6.5.2.2-2.2.2.1.1" class="pilcrow">¶</a></p>
+                    <p id="section-6.5.2.2-2.2.2.1.1"><strong>Sub-attribute Requirement:</strong> The <code>path</code> <span class="bcp14">MUST</span> target a specific sub-attribute of the matched element (e.g., <code>path: "emails[type eq \"work\"].value"</code>). Clients <span class="bcp14">MUST NOT</span> target the element object itself (e.g., <code>path: "emails[type eq \"work\"]"</code>).<a href="#section-6.5.2.2-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-6.5.2.2-2.2.2.2">
+                    <p id="section-6.5.2.2-2.2.2.2.1"><strong>Operator Restriction:</strong> Clients <span class="bcp14">MUST NOT</span> use filter operators other than <code>eq</code> and <code>and</code> in a <code>path</code> value (e.g., <code>emails[type co \"work\"].value</code>).<a href="#section-6.5.2.2-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-6.5.2.2-2.2.2.3">
+                    <p id="section-6.5.2.2-2.2.2.3.1"><strong>Single-Match Requirement:</strong> Clients <span class="bcp14">MUST NOT</span> use a filter in a <code>path</code> value that matches more than one element of the multi-valued attribute.<a href="#section-6.5.2.2-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
 </li>
@@ -1499,15 +1527,23 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
 </div>
 </section>
 </div>
-<div id="error-handling">
+<div id="patch-error-handling">
 <section id="section-6.5.3">
-          <h4 id="name-error-handling">
-<a href="#section-6.5.3" class="section-number selfRef">6.5.3. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
+          <h4 id="name-patch-error-handling">
+<a href="#section-6.5.3" class="section-number selfRef">6.5.3. </a><a href="#name-patch-error-handling" class="section-name selfRef">PATCH Error Handling</a>
           </h4>
-<p id="section-6.5.3-1">Service Providers <strong><span class="bcp14">MAY</span></strong> return an HTTP <code>400 Bad Request</code> for any PATCH operation that violates these constraints. Specific <code>scimType</code> values should be used as follows:
-* <code>invalidSyntax</code>: Missing <code>path</code> or use of prohibited operators.
-* <code>invalidFilter</code>: Filter matches more than one element in a multi-valued attribute.
-* <code>invalidPath</code>: Filter fails to target a specific sub-attribute.<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.3-1">A Service Provider that rejects a PATCH operation violating the constraints defined in this section <span class="bcp14">MUST</span> return an HTTP <code>400 Bad Request</code> and <span class="bcp14">MUST</span> use the <code>scimType</code> values as follows:<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.3-2.1">
+              <p id="section-6.5.3-2.1.1"><code>invalidSyntax</code>: Missing <code>path</code>.<a href="#section-6.5.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.5.3-2.2">
+              <p id="section-6.5.3-2.2.1"><code>invalidFilter</code>: Filter uses an operator other than <code>eq</code> and <code>and</code>.<a href="#section-6.5.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.5.3-2.3">
+              <p id="section-6.5.3-2.3.1"><code>invalidPath</code>: Filter fails to target a specific sub-attribute, or filter matches more than one element in a multi-valued attribute.<a href="#section-6.5.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
 </section>
 </div>
 </section>
@@ -1517,10 +1553,10 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-resource-lifecycle">
 <a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-resource-lifecycle" class="section-name selfRef">Resource Lifecycle</a>
         </h3>
-<p id="section-6.6-1">Service Providers <strong><span class="bcp14">MUST NOT</span></strong> treat a <code>PATCH</code> request as a deletion of the resource. A resource modified via <code>PATCH</code> <strong><span class="bcp14">MUST</span></strong> be retained by the Service Provider. Deletion of a resource can only be performed via an HTTP <code>DELETE</code> request.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<p id="section-6.6-1">Service Providers <span class="bcp14">MUST NOT</span> treat a <code>PATCH</code> request as a deletion of the resource. A resource modified via <code>PATCH</code> <span class="bcp14">MUST</span> be retained by the Service Provider. Deletion of a resource can only be performed via an HTTP <code>DELETE</code> request.<a href="#section-6.6-1" class="pilcrow">¶</a></p>
 <p id="section-6.6-2">Service Providers <span class="bcp14">MUST</span> return <code>404 Not Found</code> in response to any operation targeting a deleted resource and <span class="bcp14">MUST</span> omit deleted resources from all query results.<a href="#section-6.6-2" class="pilcrow">¶</a></p>
 <p id="section-6.6-3">After a resource is successfully deleted, its unique identifiers (such as <code>userName</code>) <span class="bcp14">MUST NOT</span> be considered in uniqueness conflict calculations and <span class="bcp14">MUST</span> be available for reassignment to a new resource.<a href="#section-6.6-3" class="pilcrow">¶</a></p>
-<p id="section-6.6-4">Service Providers <span class="bcp14">MUST NOT</span> respond to an HTTP <code>DELETE</code> request by modifying resource attributes rather than deleting the resource (e.g., setting a User's <code>active</code> attribute to <code>false</code>). A successful <code>DELETE</code> request <span class="bcp14">MUST</span> result in the resource being deleted.<a href="#section-6.6-4" class="pilcrow">¶</a></p>
+<p id="section-6.6-4">Service Providers <span class="bcp14">MUST NOT</span> respond to an HTTP <code>DELETE</code> request by modifying resource attributes rather than deleting the resource (e.g., setting a User's <code>active</code> attribute to <code>false</code>).<a href="#section-6.6-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="concurrency-and-versioning">
@@ -1528,7 +1564,8 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-concurrency-and-versioning">
 <a href="#section-6.7" class="section-number selfRef">6.7. </a><a href="#name-concurrency-and-versioning" class="section-name selfRef">Concurrency and Versioning</a>
         </h3>
-<p id="section-6.7-1">Clients <strong><span class="bcp14">MUST NOT</span></strong> include HTTP headers related to conditional requests or entity tags (ETags), such as <code>If-Match</code>, <code>If-None-Match</code>, <code>If-Modified-Since</code>, or <code>If-Unmodified-Since</code>. Service Providers are not expected to support these headers and <strong><span class="bcp14">MAY</span></strong> ignore them or reject the request.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
+<p id="section-6.7-1">Clients <span class="bcp14">MUST NOT</span> include HTTP headers related to conditional requests or entity tags (ETags), such as <code>If-Match</code>, <code>If-None-Match</code>, <code>If-Modified-Since</code>, or <code>If-Unmodified-Since</code>. Service Providers are not expected to support these headers. A Service Provider that does not evaluate a conditional request header <span class="bcp14">SHOULD</span> reject the request with HTTP <code>412 Precondition Failed</code> rather than ignoring the header, since a Client that sends such a header expects it to be enforced.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
+<p id="section-6.7-2">This requirement means the profile provides no protection against lost updates when more than one Client modifies the same resource, including multiple identity providers provisioning to the same Service Provider. This is a deliberate trade-off in favor of keeping both Clients and Service Providers simple. Because every <code>PATCH</code> operation must include a <code>path</code>, a Client's update affects only the attributes it targets.<a href="#section-6.7-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="bulk-operations">
@@ -1539,17 +1576,26 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
 <p id="section-6.8-1">Support for the <code>/Bulk</code> endpoint (<span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.7) is <span class="bcp14">OPTIONAL</span>.<a href="#section-6.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="error-handling-1">
+<div id="error-handling">
 <section id="section-6.9">
-        <h3 id="name-error-handling-2">
-<a href="#section-6.9" class="section-number selfRef">6.9. </a><a href="#name-error-handling-2" class="section-name selfRef">Error Handling</a>
+        <h3 id="name-error-handling">
+<a href="#section-6.9" class="section-number selfRef">6.9. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
         </h3>
 <div id="uniqueness-conflicts">
 <section id="section-6.9.1">
           <h4 id="name-uniqueness-conflicts">
 <a href="#section-6.9.1" class="section-number selfRef">6.9.1. </a><a href="#name-uniqueness-conflicts" class="section-name selfRef">Uniqueness Conflicts</a>
           </h4>
-<p id="section-6.9.1-1">When a <code>POST</code> or <code>PATCH</code> request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like <code>userName</code> or <code>emails</code>), the Service Provider <strong><span class="bcp14">MUST</span></strong> return an HTTP <code>409 Conflict</code> response. The response body <strong><span class="bcp14">MUST</span></strong> also include a SCIM error detail with the <code>scimType</code> set to <code>uniqueness</code>, as defined in <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.12.<a href="#section-6.9.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.9.1-1">When a <code>POST</code> or <code>PATCH</code> request attempts to create or modify a resource in a way that violates a uniqueness constraint (e.g., for attributes like <code>userName</code> or <code>emails</code>), the Service Provider <span class="bcp14">MUST</span> return an HTTP <code>409 Conflict</code> response (<span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, Section 15.5.10). The response body <span class="bcp14">MUST</span> also include a SCIM error detail with the <code>scimType</code> set to <code>uniqueness</code>, as defined in <span>[<a href="#RFC7644" class="cite xref">RFC7644</a>]</span>, Section 3.12.<a href="#section-6.9.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="rate-limiting">
+<section id="section-6.9.2">
+          <h4 id="name-rate-limiting">
+<a href="#section-6.9.2" class="section-number selfRef">6.9.2. </a><a href="#name-rate-limiting" class="section-name selfRef">Rate Limiting</a>
+          </h4>
+<p id="section-6.9.2-1">Service Providers that limit the rate of requests <span class="bcp14">SHOULD</span> respond with HTTP <code>429 Too Many Requests</code> (<span>[<a href="#RFC6585" class="cite xref">RFC6585</a>]</span>, Section 4) and <span class="bcp14">SHOULD</span> include a <code>Retry-After</code> header (<span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, Section 10.2.3) indicating how long the Client should wait before retrying. A Service Provider <span class="bcp14">MAY</span> instead respond with HTTP <code>503 Service Unavailable</code> (<span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>, Section 15.6.4), which <span class="bcp14">MAY</span> also include a <code>Retry-After</code> header.<a href="#section-6.9.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.9.2-2">When a Client receives a <code>429</code> or <code>503</code> response, it <span class="bcp14">MUST NOT</span> retry the request before the time indicated by the <code>Retry-After</code> header has elapsed. If the response does not include a <code>Retry-After</code> header, the Client <span class="bcp14">MUST</span> apply a backoff before retrying.<a href="#section-6.9.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1566,7 +1612,7 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-transport-security">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-transport-security" class="section-name selfRef">Transport Security</a>
         </h3>
-<p id="section-7.1-1">All communication between a Client and Service Provider <span class="bcp14">MUST</span> be secured using Transport Layer Security (TLS) <span>[<a href="#RFC8446" class="cite xref">RFC8446</a>]</span>. Implementations <span class="bcp14">MUST</span> support TLS 1.3 and <span class="bcp14">MAY</span> support TLS 1.2.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.1-1">All communication between a Client and Service Provider <span class="bcp14">MUST</span> be secured using Transport Layer Security (TLS). Implementations <span class="bcp14">MUST</span> follow the recommendations in BCP 195 <span>[<a href="#RFC9325" class="cite xref">RFC9325</a>]</span>.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authentication">
@@ -1574,7 +1620,25 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
         <h3 id="name-authentication">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-authentication" class="section-name selfRef">Authentication</a>
         </h3>
-<p id="section-7.2-1">The use of HTTP Basic Authentication over TLS is <span class="bcp14">NOT RECOMMENDED</span>.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-1">The use of HTTP Basic Authentication over TLS is <span class="bcp14">NOT RECOMMENDED</span>. Alternatives include OAuth 2.0 Bearer Tokens <span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span>.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="resource-addressing">
+<section id="section-7.3">
+        <h3 id="name-resource-addressing">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-resource-addressing" class="section-name selfRef">Resource Addressing</a>
+        </h3>
+<p id="section-7.3-1">This profile requires that resources be addressed by <code>id</code> rather than by other attribute values in the URI path. If a resource could also be addressed by a mutable attribute such as <code>userName</code>, the value of that attribute could be transferred between resources, and a request addressed to the old value would modify a different resource than the Client intended. For example, User A holds the <code>userName</code> "alice" and User B holds the <code>userName</code> "bob". If those values are swapped, so that A now holds "bob" and B now holds "alice", a Client issuing <code>PATCH /Users/alice</code> with entitlements or role assignments intended for the original User A would instead modify User B. The <code>id</code> attribute is assigned by the Service Provider and is stable and non-reassignable (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 3.1), which removes this risk.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="identifier-reuse">
+<section id="section-7.4">
+        <h3 id="name-identifier-reuse">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-identifier-reuse" class="section-name selfRef">Identifier Reuse</a>
+        </h3>
+<p id="section-7.4-1">Resources have two kinds of identifiers. The <code>id</code> attribute is assigned by the Service Provider, is immutable, and is non-reassignable (<span>[<a href="#RFC7643" class="cite xref">RFC7643</a>]</span>, Section 3.1). Attributes such as <code>userName</code> and <code>emails.value</code> are subject to uniqueness constraints but are set by Clients and can usually be changed. Their values can also be reused over time. For example, the <code>userName</code> "jsmith" can belong to one person and later, after that person's resource is deleted, to a different person.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+<p id="section-7.4-2">A Service Provider that supports the HTTP <code>DELETE</code> method makes the unique identifiers of a deleted resource, such as <code>userName</code>, available for reassignment to a new resource, as described in the Resource Lifecycle section. Because the values of these attributes can change and be reused, Clients, Service Providers, and other systems <span class="bcp14">SHOULD NOT</span> use them as stable references to a resource, for example as the key for access grants or role assignments. They <span class="bcp14">SHOULD</span> use <code>id</code> for that purpose. A record keyed on a reusable value can end up applying to a different person than the one it was created for.<a href="#section-7.4-2" class="pilcrow">¶</a></p>
+<p id="section-7.4-3">A Service Provider that does not want these values to be reused <span class="bcp14">SHOULD NOT</span> permit the resource to be deleted, and <span class="bcp14">SHOULD</span> instead retain the resource with the <code>active</code> attribute set to <code>false</code>. The <code>active</code> attribute is a Boolean and cannot distinguish a temporarily disabled resource from one that is permanently disabled and retained to prevent reuse of its identifiers.<a href="#section-7.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1584,7 +1648,43 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
       <h2 id="name-iana-considerations">
 <a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-8-1">Prior to being published as an RFC, this document requests that the IANA SCIM Server-Related Schema URIs registry entry for <code>urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig</code> be updated to include or reference the <code>interopProfileConformant</code> attribute defined in Section 4 of this document.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div id="serviceproviderconfig-schema-registry-entry">
+<section id="section-8.1">
+        <h3 id="name-serviceproviderconfig-schem">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-serviceproviderconfig-schem" class="section-name selfRef">ServiceProviderConfig Schema Registry Entry</a>
+        </h3>
+<p id="section-8.1-1">IANA is requested to add Section 4 of this document to the References column of the "SCIM Server-Related Schema URIs" registry entry for <code>urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig</code>.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="scim-profile-identifiers-registry">
+<section id="section-8.2">
+        <h3 id="name-scim-profile-identifiers-re">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-scim-profile-identifiers-re" class="section-name selfRef">SCIM Profile Identifiers Registry</a>
+        </h3>
+<p id="section-8.2-1">IANA is requested to create a registry called "SCIM Profile Identifiers" under the "System for Cross-domain Identity Management (SCIM) Schema URIs" registry group at <a href="https://www.iana.org/assignments/scim">https://www.iana.org/assignments/scim</a>. The registration procedure is Specification Required <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>. Designated experts evaluate registrations for relevance to SCIM-based systems, for duplication or conflict with other profile definitions, and for whether the referenced specification defines conformance clearly enough for independent implementations.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-2">A registration <span class="bcp14">MUST</span> include a profile identifier, a descriptive name, and a reference to the profile's specification. Registered identifiers use the form <code>urn:ietf:params:scim:profile:{name}</code>, where <code>{name}</code> is an ASCII string that conforms to URN syntax requirements <span>[<a href="#RFC8141" class="cite xref">RFC8141</a>]</span>. Once an identifier has been allocated, it <span class="bcp14">MUST NOT</span> be reallocated for a different purpose. Registration is optional; profiles <span class="bcp14">MAY</span> be identified by unregistered URIs.<a href="#section-8.2-2" class="pilcrow">¶</a></p>
+<p id="section-8.2-3">The initial contents of the registry are:<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">Profile Identifier</th>
+              <th class="text-left" rowspan="1" colspan="1">Name</th>
+              <th class="text-left" rowspan="1" colspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>urn:ietf:params:scim:profile:interop</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">SCIM 2.0 Interoperability Profile</td>
+              <td class="text-left" rowspan="1" colspan="1">Section 4 of this document</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
 </section>
 </div>
 <div id="acknowledgements">
@@ -1595,37 +1695,73 @@ appear in all capitals, as shown here.<a href="#section-3-1" class="pilcrow">¶<
 <p id="section-9-1"><em>(TODO: Add acknowledgements)</em><a href="#section-9-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="sec-normative-references">
+<div id="sec-combined-references">
 <section id="section-10">
-      <h2 id="name-normative-references">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+      <h2 id="name-references">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
+<div id="sec-normative-references">
+<section id="section-10.1">
+        <h3 id="name-normative-references">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
 <dl class="references">
 <dt id="RFC2119">[RFC2119]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="RFC6585">[RFC6585]</dt>
+        <dd>
+<span class="refAuthor">Nottingham, M.</span> and <span class="refAuthor">R. Fielding</span>, <span class="refTitle">"Additional HTTP Status Codes"</span>, <span class="seriesInfo">RFC 6585</span>, <span class="seriesInfo">DOI 10.17487/RFC6585</span>, <time datetime="2012-04" class="refDate">April 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6585">https://www.rfc-editor.org/info/rfc6585</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC7643">[RFC7643]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Hunt, P., Ed.</span>, <span class="refAuthor">Grizzle, K.</span>, <span class="refAuthor">Wahlstroem, E.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"System for Cross-domain Identity Management: Core Schema"</span>, <span class="seriesInfo">RFC 7643</span>, <span class="seriesInfo">DOI 10.17487/RFC7643</span>, <time datetime="2015-09" class="refDate">September 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7643">https://www.rfc-editor.org/info/rfc7643</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7644">[RFC7644]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Hunt, P., Ed.</span>, <span class="refAuthor">Grizzle, K.</span>, <span class="refAuthor">Ansari, M.</span>, <span class="refAuthor">Wahlstroem, E.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"System for Cross-domain Identity Management: Protocol"</span>, <span class="seriesInfo">RFC 7644</span>, <span class="seriesInfo">DOI 10.17487/RFC7644</span>, <time datetime="2015-09" class="refDate">September 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7644">https://www.rfc-editor.org/info/rfc7644</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="RFC8126">[RFC8126]</dt>
+        <dd>
+<span class="refAuthor">Cotton, M.</span>, <span class="refAuthor">Leiba, B.</span>, and <span class="refAuthor">T. Narten</span>, <span class="refTitle">"Guidelines for Writing an IANA Considerations Section in RFCs"</span>, <span class="seriesInfo">BCP 26</span>, <span class="seriesInfo">RFC 8126</span>, <span class="seriesInfo">DOI 10.17487/RFC8126</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8126">https://www.rfc-editor.org/info/rfc8126</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8141">[RFC8141]</dt>
+        <dd>
+<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">J. Klensin</span>, <span class="refTitle">"Uniform Resource Names (URNs)"</span>, <span class="seriesInfo">RFC 8141</span>, <span class="seriesInfo">DOI 10.17487/RFC8141</span>, <time datetime="2017-04" class="refDate">April 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8141">https://www.rfc-editor.org/info/rfc8141</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC8446">[RFC8446]</dt>
-      <dd>
-<span class="refAuthor">Rescorla, E.</span>, <span class="refTitle">"The Transport Layer Security (TLS) Protocol Version 1.3"</span>, <span class="seriesInfo">RFC 8446</span>, <span class="seriesInfo">DOI 10.17487/RFC8446</span>, <time datetime="2018-08" class="refDate">August 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8446">https://www.rfc-editor.org/info/rfc8446</a>&gt;</span>. </dd>
+<dt id="RFC9110">[RFC9110]</dt>
+        <dd>
+<span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Semantics"</span>, <span class="seriesInfo">STD 97</span>, <span class="seriesInfo">RFC 9110</span>, <span class="seriesInfo">DOI 10.17487/RFC9110</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9110">https://www.rfc-editor.org/info/rfc9110</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9325">[RFC9325]</dt>
+        <dd>
+<span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Saint-Andre, P.</span>, and <span class="refAuthor">T. Fossati</span>, <span class="refTitle">"Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"</span>, <span class="seriesInfo">BCP 195</span>, <span class="seriesInfo">RFC 9325</span>, <span class="seriesInfo">DOI 10.17487/RFC9325</span>, <time datetime="2022-11" class="refDate">November 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9325">https://www.rfc-editor.org/info/rfc9325</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9865">[RFC9865]</dt>
-    <dd>
+      <dd>
 <span class="refAuthor">Peterson, M., Ed.</span>, <span class="refAuthor">Zollner, D.</span>, and <span class="refAuthor">A. Sehgal</span>, <span class="refTitle">"Cursor-Based Pagination of System of Cross-domain Identity Management (SCIM) Resources"</span>, <span class="seriesInfo">RFC 9865</span>, <span class="seriesInfo">DOI 10.17487/RFC9865</span>, <time datetime="2025-10" class="refDate">October 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9865">https://www.rfc-editor.org/info/rfc9865</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-10.2">
+        <h3 id="name-informative-references">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC6750">[RFC6750]</dt>
+      <dd>
+<span class="refAuthor">Jones, M.</span> and <span class="refAuthor">D. Hardt</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework: Bearer Token Usage"</span>, <span class="seriesInfo">RFC 6750</span>, <span class="seriesInfo">DOI 10.17487/RFC6750</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6750">https://www.rfc-editor.org/info/rfc6750</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
 </section>
 </div>
 <div id="authors-addresses">
