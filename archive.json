@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-06T03:51:49.493814+00:00",
+  "timestamp": "2026-10-22T02:28:39.405049+00:00",
   "repo": "Zollnerd/scim-interop-profile",
   "labels": [
     {
@@ -62,9 +62,17 @@
       "labels": [],
       "body": "**Sections:** [\u00a74](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-4), [\u00a78](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-8)\n\nIn the March thread with Matthias, you mentioned adding ServiceProviderConfig attributes so SPs could declare *which* profiles they conform to ([March 19](https://mailarchive.ietf.org/arch/msg/scim/Bj_b8FnMX9D4cqyVCoeBinrmmhE/)). -01 landed on a single `interopProfileConformant` boolean. I wonder if it's worth going back toward the original idea.\n\nA couple of things push me that way. The IPSIE profile already builds on this one, so there will be at least two profiles an SP might want to declare, and probably more later. And a boolean can't tell -01 conformance apart from whatever this looks like a few revisions from now.\n\nSomething like a multi-valued `profiles` attribute holding URIs would cover both. Defining it in a small extension schema might also be easier than asking IANA to amend the core ServiceProviderConfig entry (\u00a78).\n\nA smaller thought: there's currently no way for a client to signal conformance. That may be out of scope, but even a sentence acknowledging it would help.",
       "createdAt": "2026-10-05T17:55:39Z",
-      "updatedAt": "2026-10-05T17:55:39Z",
+      "updatedAt": "2026-10-20T20:13:13Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed, and this returns to what I described in March: a list of profiles rather than a boolean. `interopProfileConformant` is replaced by a `conformsTo` attribute on ServiceProviderConfig holding a multi-valued `profiles` list of identifiers (f1dcf0f, PR #16). It's a core attribute, following RFC 9865's addition of `pagination`, with the IANA entry for ServiceProviderConfig updated to reference this document. Since other profiles, including the IPSIE work, will want identifiers too, the draft also requests a small IANA registry for profile identifiers, with this profile as its first entry. Registration is optional, and Clients ignore identifiers they don't recognize. On client-side signaling: the profile doesn't define a mechanism. An SP can't discover anything about a Client in advance, and a Client's conformance is evident from its behavior. A Client can instead read the SP's `conformsTo` list and choose the matching conformant behavior.",
+          "createdAt": "2026-10-20T20:13:13Z",
+          "updatedAt": "2026-10-20T20:13:13Z"
+        }
+      ]
     },
     {
       "number": 4,
@@ -78,9 +86,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.6](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.6)\n\nThe last sentence of \u00a76.6 says a successful DELETE MUST result in the resource being deleted. I think this might have slipped through. In March you pushed back on exactly this requirement, pointing out that RFC 7644 \u00a73.6 lets SPs retain records after deletion ([March 19](https://mailarchive.ietf.org/arch/msg/scim/Bj_b8FnMX9D4cqyVCoeBinrmmhE/)), and Matthias agreed ([March 20](https://mailarchive.ietf.org/arch/msg/scim/SAgaWS0unYWOuCUgeywOQXz_hTA/)).\n\nThe rest of \u00a76.6 already captures the behavior clients actually see: 404 afterward, omission from queries, and identifiers freed up. The simplest fix might be to drop that sentence. Alternatively, it could be reworded so it's about observable behavior rather than storage, something like \"...MUST thereafter behave as described above.\" The \"don't respond to DELETE by setting `active` to false\" part still reads fine on its own.",
       "createdAt": "2026-10-05T17:55:41Z",
-      "updatedAt": "2026-10-05T17:55:41Z",
+      "updatedAt": "2026-10-20T20:13:15Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed; that sentence was a leftover from before the March discussion and conflicts with RFC 7644 Section 3.6, which allows SPs to retain records after deletion. Removed in 01dc1fc (PR #16). The 404, query-omission, and identifier-release requirements in the same section already define the behavior clients observe, and the prohibition on answering DELETE by only setting `active` to `false` stays as written.",
+          "createdAt": "2026-10-20T20:13:15Z",
+          "updatedAt": "2026-10-20T20:13:15Z"
+        }
+      ]
     },
     {
       "number": 5,
@@ -94,9 +110,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.4](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.4)\n\nI think there's a gap here. An SP can implement index-based *or* cursor-based pagination, but nothing says a client has to handle both. So a cursor-only SP and an index-only client (or the reverse) are both conformant and still can't page through results together.\n\nWhat worries me is that this mismatch fails quietly. A cursor-only client talking to an index-only SP sends `cursor=`, gets back the first page with no `nextCursor`, and per RFC 9865 reads that as \"last page.\" Going the other way, an index-only client sends `startIndex=101` to a cursor-only SP that ignores it, and probably gets page one again. RFC 9865 also lets cursor SPs omit `totalResults`, so there may be nothing to check against. In provisioning, a truncated read feeds straight into reconciliation: duplicate creates, or worse, missed deprovisioning.\n\nHere's what I'd suggest, as two pieces that work together:\n\n- **Clients support both methods.** In the many-to-many model the abstract describes, clients are a handful of large IdPs and SPs are a long tail of SaaS apps. It seems better to put the burden on the few clients, and that keeps cursor-only SPs viable, which is the whole point of RFC 9865.\n- **Make mismatches loud.** SPs publish the RFC 9865 `pagination` block in ServiceProviderConfig (it's currently OPTIONAL there), and reject a pagination parameter they don't support with a 400 rather than silently ignoring it. That turns silent truncation into a visible error even when something else goes wrong.\n\nI'd steer away from just making index-based mandatory for SPs. It's simpler on paper, but it pushes cursor-native backends right back into the pagination translation RFC 9865 was written to avoid.\n\nA related nit: \"MUST return fewer results than requested when the client specifies a count value that exceeds that limit\" might read more clearly as \"MUST truncate to its maximum rather than returning an error.\" That would make it obvious what implementers shouldn't do.",
       "createdAt": "2026-10-05T17:55:42Z",
-      "updatedAt": "2026-10-05T17:55:42Z",
+      "updatedAt": "2026-10-20T20:13:16Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "RFC 9865 doesn't say what an SP does with a pagination parameter it doesn't support, and cursor SPs may omit `totalResults`, so a mismatched pairing can truncate results with nothing to flag it. Both changes you suggested are in 4939b9e (PR #16): Clients MUST support both methods (and follow `nextCursor` whenever it appears), and SPs MUST publish the `pagination` block and reject unsupported pagination parameters with a 400. The client-side requirement is a significant new obligation, so I'll flag it on the list for WG input. The `count` sentence is reworded as suggested.",
+          "createdAt": "2026-10-20T20:13:16Z",
+          "updatedAt": "2026-10-20T20:13:16Z"
+        }
+      ]
     },
     {
       "number": 6,
@@ -110,9 +134,17 @@
       "labels": [],
       "body": "**Sections:** [\u00a74](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-4), [\u00a76.5.2.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.2.2)\n\n\u00a74 defines conformance in terms of requirements expressed with MUST, SHALL, and REQUIRED. Read literally, that leaves out the MUST NOT and SHALL NOT requirements, and a lot of the profile's value is in those. Maybe something like \"all absolute requirements and prohibitions as defined in BCP 14\"?\n\nRelatedly, \u00a76.5.2.2 uses \"PROHIBITED,\" which isn't a BCP 14 keyword. Swapping it for MUST NOT would bring that rule into scope too.",
       "createdAt": "2026-10-05T17:55:43Z",
-      "updatedAt": "2026-10-05T17:55:43Z",
+      "updatedAt": "2026-10-20T20:13:18Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on both (5a96265, PR #16). The conformance definition now covers all absolute requirements and prohibitions per BCP 14, so MUST NOT and SHALL NOT are in scope, and \"PROHIBITED\" is replaced with a client-directed MUST NOT.",
+          "createdAt": "2026-10-20T20:13:18Z",
+          "updatedAt": "2026-10-20T20:13:18Z"
+        }
+      ]
     },
     {
       "number": 7,
@@ -126,9 +158,17 @@
       "labels": [],
       "body": "**Sections:** [\u00a76.5.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.3), [\u00a76.5.1.1](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.1.1)\n\n\u00a76.5.1.1 says SPs MUST reject a PATCH with no `path` using 400 and invalidSyntax. \u00a76.5.3 then says SPs MAY return 400 for any operation that violates the constraints. I'm guessing the MAY was meant as \"here's what to use when you reject,\" but it reads as if rejection is optional.\n\nA few other things I noticed in \u00a76.5.3:\n\n- It mentions \"prohibited operators,\" but I couldn't find where those are defined.\n- It lists invalidFilter for a filter that matches more than one element, but nothing earlier says a multi-match is an error. Is that the intent? If so, it might be worth stating up in \u00a76.5.2.2.\n- There are two sections titled \"Error Handling\" (\u00a76.5.3 and \u00a76.9). Maybe call this one \"PATCH Error Handling.\"",
       "createdAt": "2026-10-05T17:55:45Z",
-      "updatedAt": "2026-10-05T17:55:45Z",
+      "updatedAt": "2026-10-20T20:13:20Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The MAY was meant to say what an SP uses when it rejects, not to make rejection optional. The profile's approach is to place hard requirements on Clients so that SPs stay compatible with Clients that don't conform to it, so rejection is now discretionary in both places (539b328, PR #16). That includes the path-less case in 6.5.1.1, where the MUST became a MAY, so the two sections no longer conflict. An SP that rejects MUST use the specified error codes. \"Prohibited operators\" referred to the eq/and restriction, which was only stated for the `filter` query parameter; it is now stated in the PATCH constraints as a Client requirement and mapped to `invalidFilter`, which RFC 7644 Table 9 lists for PATCH path filters. On multi-match: RFC 7644 Section 3.5.2 replaces all matching values, so I added a Client requirement not to send such filters, with `invalidPath` for SPs that reject them. `invalidFilter` covers invalid syntax and unsupported attribute/filter combinations rather than ambiguous matches. The section is retitled \"PATCH Error Handling.\"",
+          "createdAt": "2026-10-20T20:13:20Z",
+          "updatedAt": "2026-10-20T20:13:20Z"
+        }
+      ]
     },
     {
       "number": 8,
@@ -142,9 +182,17 @@
       "labels": [],
       "body": "**Section:** [\u00a75.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.3)\n\nStrict rejection of unknown attributes seems like the right call to me. Two thoughts on it.\n\nFirst, invalidSyntax feels aimed at requests the SP can't parse. If I'm reading RFC 7644 Table 9 right, invalidValue's definition covers values that aren't compatible with the resource schema, which seems closer to this case. I'm not certain that's the best fit, but it seems worth a look.\n\nSecond, strict rejection pretty much requires clients to read /Schemas before sending anything, which \u00a75.4 already assumes. It might help to say that outright, something like \"Clients SHOULD (or MUST) consult /Schemas and only send attributes and schema URIs the SP advertises.\" That would make the pairing between the two sections explicit.",
       "createdAt": "2026-10-05T17:55:46Z",
-      "updatedAt": "2026-10-05T17:55:46Z",
+      "updatedAt": "2026-10-20T20:13:22Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on both (1e289d3, PR #16). RFC 7644 Table 9 lists `invalidValue` for values that aren't compatible with the resource schema, and lists it for both POST and PATCH, so the draft now uses it. The /Schemas pairing is now a Client requirement: Clients MUST consult /Schemas and only send attributes and schema URIs the SP advertises. I used a MUST because the SP side already rejects the request, so a SHOULD would let a conformant Client send requests that a conformant SP rejects.",
+          "createdAt": "2026-10-20T20:13:22Z",
+          "updatedAt": "2026-10-20T20:13:22Z"
+        }
+      ]
     },
     {
       "number": 9,
@@ -158,9 +206,17 @@
       "labels": [],
       "body": "**Section:** [\u00a75.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.2)\n\n\u00a76.9.1 uses emails as its example of a uniqueness conflict, but \u00a75.2 doesn't list emails. Since \u00a75.2 ties filter case rules to uniqueness rules, emails seems like the most likely place for that to bite. It might be worth adding an entry that reiterates whatever RFC 7643 says for `emails.value`.\n\nGroup `displayName` would be the other candidate. Based on the March discussion, that probably belongs with the IPSIE work, so a pointer there might be enough.",
       "createdAt": "2026-10-05T17:55:48Z",
-      "updatedAt": "2026-10-05T17:55:48Z",
+      "updatedAt": "2026-10-20T20:13:23Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on `emails.value` (79e88ab, PR #16). It is added to the case sensitivity list with the RFC 7643 definition (`caseExact` of `false`), treating the entire address as case-insensitive. This departs from RFC 5321 Section 2.4, which treats the mailbox local-part as case sensitive, but that section also discourages relying on local-part case sensitivity because it impedes interoperability, and the prevailing pattern in deployed mail systems is to treat the whole address as case-insensitive. Group `displayName` is outside what this profile covers, so there is no entry for it here.",
+          "createdAt": "2026-10-20T20:13:23Z",
+          "updatedAt": "2026-10-20T20:13:23Z"
+        }
+      ]
     },
     {
       "number": 10,
@@ -174,9 +230,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.3)\n\nA few small things in \u00a76.3:\n\n- **`/.search`.** With filters in the URI banned for anything but GET, someone might reach for POST `/.search` instead. It would help to say whether that's allowed, optional, or out of bounds.\n- **Who the rule binds.** \"The use of filters in the URI for any HTTP method other than GET *MUST NOT* be used\" is passive, so it's unclear who it applies to. I assume it means clients MUST NOT send these. Should SPs also reject them?\n- **Minimum filterable attributes.** Is there a minimum set SPs must support filtering on (userName, externalId, displayName)? If that's deferred to IPSIE, a pointer would do.",
       "createdAt": "2026-10-05T17:55:51Z",
-      "updatedAt": "2026-10-05T17:55:51Z",
+      "updatedAt": "2026-10-20T20:13:25Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The prohibition is aimed at filters in the HTTP request URI on anything other than GET, such as `PATCH /Users?filter=...`, which would apply the request body to every matching resource. Filters on reads are fine, so the draft now states explicitly that GET with the `filter` parameter and POST `/.search` with the filter in the body are both permitted, that the restriction applies only to the request URI (filters in a PATCH `path` and in a `/.search` body are not affected), and that the eq/and restriction applies to either read form (0da2d21, PR #16). The rule binds Clients only; SPs aren't required to reject filtered writes, which keeps them compatible with Clients that don't conform to the profile. On minimum filterable attributes: resource-specific lists aren't part of this profile, but the draft now requires SPs to support `eq` filtering on any attribute they enforce uniqueness on, so that Clients can locate the resource behind a conflict.",
+          "createdAt": "2026-10-20T20:13:25Z",
+          "updatedAt": "2026-10-20T20:13:25Z"
+        }
+      ]
     },
     {
       "number": 11,
@@ -190,9 +254,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.9](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.9)\n\nIn my experience, rate limiting is one of the things that ends up custom per integration. Would a short paragraph be worth adding? Something like: SPs SHOULD return 429 with Retry-After when throttling, and clients MUST honor Retry-After and back off. That paragraph might cover 503 as well.",
       "createdAt": "2026-10-05T17:55:52Z",
-      "updatedAt": "2026-10-05T17:55:52Z",
+      "updatedAt": "2026-10-20T20:13:26Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed (0cce46d, PR #16). A new Rate Limiting subsection says SPs that throttle SHOULD respond with 429 and Retry-After, with 503 permitted as an alternative, and Clients MUST NOT retry before the Retry-After time has elapsed and MUST back off when it is absent. The SP side stays a SHOULD because RFC 6585 Section 7.2 says servers aren't required to use 429. One correction on references: 429 is defined in RFC 6585, not RFC 9110, so the draft cites both.",
+          "createdAt": "2026-10-20T20:13:26Z",
+          "updatedAt": "2026-10-20T20:13:26Z"
+        }
+      ]
     },
     {
       "number": 12,
@@ -206,9 +278,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.7](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.7)\n\nI get why \u00a76.7 bans conditional headers, since it keeps both sides simple. The only thing I'd flag is that the abstract leans on the case of multiple IdPs provisioning into the same SP, which is exactly where lost updates show up. I'm not suggesting reversing the ban, but a sentence acknowledging the trade-off would help implementers know it was a deliberate choice.\n\nSeparately, on \"MAY ignore them or reject the request\": if a client does send `If-Match` and the SP silently ignores it, the client thinks it has a guard it doesn't actually have. It might be worth leaning toward reject.",
       "createdAt": "2026-10-05T17:55:54Z",
-      "updatedAt": "2026-10-05T17:55:54Z",
+      "updatedAt": "2026-10-20T20:13:28Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on both (0ef8b2d, PR #16). The draft now says banning conditional headers leaves the profile with no lost-update protection, including for the multiple-IdP case in the abstract, and that this is a deliberate choice to keep Clients and SPs simple. On ignore vs. reject: RFC 9110 Section 13.1.1 requires an origin server that receives If-Match to evaluate it, and a silent ignore leaves the Client believing it has a guard it doesn't. An SP that doesn't evaluate a conditional header now SHOULD reject with 412 rather than ignore it. It stays a SHOULD so that SPs remain compatible with Clients that don't conform to the profile and send these headers today.",
+          "createdAt": "2026-10-20T20:13:28Z",
+          "updatedAt": "2026-10-20T20:13:28Z"
+        }
+      ]
     },
     {
       "number": 13,
@@ -222,9 +302,17 @@
       "labels": [],
       "body": "**Section:** [\u00a77](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-7)\n\nYour April 6 example, where two users swap userNames and a PATCH to `/Users/alice` lands on the wrong person ([April 6](https://mailarchive.ietf.org/arch/msg/scim/gKgwU5N4Wj_SFBLJhWg76MGkC4k/)), is a great rationale for the id-only rule in \u00a76.1. It would be nice to capture that in \u00a77 so the reasoning survives with the text.\n\nSimilarly, \u00a76.6 strengthens identifier release after deletion to a MUST. Identifier reuse has a security angle of its own: stale references and grants in other systems can end up pointing at a new person. A sentence on that seems worthwhile.\n\nSmall one: for TLS, citing BCP 195 (RFC 9325) instead of pinning versions might age better.",
       "createdAt": "2026-10-05T17:55:55Z",
-      "updatedAt": "2026-10-05T17:55:55Z",
+      "updatedAt": "2026-10-20T20:13:29Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on both additions (ceb0c0c, PR #16). Security Considerations now has the userName swap example as the rationale for addressing resources by `id` only. The identifier reuse note separates `id`, which RFC 7643 Section 3.1 makes SP-assigned, immutable, and non-reassignable, from client-settable attributes such as `userName` and `emails.value`, which can change and be reused over time. Clients, SPs, and other systems SHOULD NOT use the latter as stable references (for access grants, role assignments, and the like) and SHOULD use `id`. An SP that doesn't want those values reused can decline to delete the resource and keep it with `active` set to `false`. That workaround exposes a gap in the lifecycle model: the Boolean `active` can't express \"permanently disabled but still exists,\" and that deserves separate work. On TLS: the pinned versions are replaced with a reference to BCP 195. The old text (MUST support TLS 1.3, MAY support TLS 1.2) didn't match RFC 9325, which requires TLS 1.2 support and recommends TLS 1.3, so this corrects that as well.",
+          "createdAt": "2026-10-20T20:13:29Z",
+          "updatedAt": "2026-10-20T20:13:29Z"
+        }
+      ]
     },
     {
       "number": 14,
@@ -254,9 +342,17 @@
       "labels": [],
       "body": "**Sections:** [\u00a72](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-2), [\u00a75.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.2), [\u00a76.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.2), [\u00a76.5.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.3), [\u00a79](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-9), [\u00a710](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-10)\n\nA handful of small things, all in one place:\n\n- The intro reads \"The SCIM 2.0 standard RFC7643 [RFC7644].\" I think it's meant to cite both RFCs.\n- Markdown emphasis (`*MUST*`) and inline bullets are leaking into the rendered text in \u00a75.2 and \u00a76.5.3. The bullets end up collapsed into the paragraph.\n- In \u00a76.2, the User-Agent text uses a lowercase \"should.\" Was that meant to be SHOULD?\n- There's no Informative References section yet. RFC 9110 (for 409, 429, and User-Agent), RFC 6750, and BCP 195 seem like candidates.\n- Acknowledgements is still a TODO.",
       "createdAt": "2026-10-05T17:55:57Z",
-      "updatedAt": "2026-10-05T17:55:57Z",
+      "updatedAt": "2026-10-20T20:13:31Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed on all of these (6498294 and 6eef7b3, PR #16). The intro cites both RFCs. The emphasis markup is removed and the collapsed lists are fixed, since both were rendering literally in the published text. For the User-Agent text, the informal \"should\" is reworded as a plain description of what the value is expected to contain, since a requirement about \"meaningful\" content can't be tested. RFC 9110 is cited for 409 and User-Agent. For references, RFC 9110, RFC 6585, and BCP 195 are cited in normative sentences, so they're normative references, and there is now an informative section with RFC 6750 and a sentence on Bearer tokens in the Authentication section. Acknowledgements will be filled in before the next published revision.",
+          "createdAt": "2026-10-20T20:13:31Z",
+          "updatedAt": "2026-10-20T20:13:31Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -307,6 +403,32 @@
       "headRepository": "Zollnerd/scim-interop-profile",
       "headRefName": "scim-interop-revision-ipsie-scope-split",
       "headRefOid": "027b8014e55f1e179f7d06a3aeb4eebb08fcba09",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 16,
+      "id": "PR_kwDORcWBWc8AAAABJo408g",
+      "title": "Address Mike Kiser's review of -01 (issues #3 to #13, #15)",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/pull/16",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Changes in response to Mike Kiser's review of draft-zollner-scim-interop-profile-01. One commit per issue, so each issue's change can be read on its own.\n\n| Issue | Commit | Change |\n|---|---|---|\n| #3 | f1dcf0f | Replace `interopProfileConformant` with a `conformsTo` attribute holding a `profiles` list; request a \"SCIM Profile Identifiers\" IANA registry |\n| #4 | 01dc1fc | Remove the leftover \"DELETE MUST result in the resource being deleted\" sentence |\n| #5 | 4939b9e | Clients support both pagination methods; SPs publish the `pagination` block and reject unsupported pagination parameters |\n| #6 | 5a96265 | Conformance covers MUST NOT / SHALL NOT; replace \"PROHIBITED\" |\n| #7 | 539b328 | PATCH error handling: discretionary rejection, Client filter constraints, retitle |\n| #8 | 1e289d3 | `invalidValue` for unknown attributes; Clients MUST honor /Schemas |\n| #9 | 79e88ab | Add `emails.value` to case sensitivity |\n| #10 | 0da2d21 | Filters allowed on reads (GET, POST /.search), not in the URI of other methods; SPs filter on unique attributes |\n| #11 | 0cce46d | Add Rate Limiting subsection (429/503, Retry-After) |\n| #12 | 0ef8b2d | Acknowledge the lost-update trade-off; SHOULD reject conditional headers with 412 |\n| #13 | ceb0c0c | Security Considerations: id-only rationale, identifier reuse; reference BCP 195 |\n| #15 | 6498294, 6eef7b3 | Editorial fixes and informative references |\n\nNot addressed here: #14 (`application/json` handling), which stays open.\n\nThe branch builds cleanly with `make`. Open points: `conformsTo` and the `interop` profile identifier are placeholder names, and the IANA registry text follows the RFC 9967 precedent without having been reviewed by IANA or a designated expert.",
+      "createdAt": "2026-10-20T20:11:01Z",
+      "updatedAt": "2026-10-20T20:11:01Z",
+      "baseRepository": "Zollnerd/scim-interop-profile",
+      "baseRefName": "main",
+      "baseRefOid": "8166a9e761f93de996f301bc7243d4c9ece7b7e1",
+      "headRepository": "Zollnerd/scim-interop-profile",
+      "headRefName": "mike-kiser-review-feedback",
+      "headRefOid": "f1dcf0f247c5b73b1914bc90d0c648e9dc8a1995",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
