@@ -180,16 +180,21 @@ This section applies to both multi-valued simple attributes (e.g., the `schemas`
 1.  **Collection-Level Operations:**
     *   **Replace:** If a Client targets a multi-valued attribute path without a filter (e.g., `path: "emails"` or `path: "roles"`) using the `replace` operation, the `value` MUST be an array of objects/values. The Service Provider MUST replace the entire collection with the provided array.
     *   **Add:** If a Client targets a multi-valued attribute path without a filter using the `add` operation, the `value` MUST be an array of objects/values. The Service Provider MUST append the provided values to the existing collection.
-2.  **Filtering Constraints:** When using a filter to target an element within a multi-valued complex attribute:
-    * **Sub-attribute Requirement:** The `path` MUST target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients MUST NOT target the element object itself (e.g., `path: "emails[type eq \"work\"]"`).
+2.  **Filtering Constraints:** When using a filter to target an element within a multi-valued attribute:
+    * **Sub-attribute Requirement:** For `add` and `replace`, the `path` MUST target a specific sub-attribute of the matched element (e.g., `path: "emails[type eq \"work\"].value"`). Clients MUST NOT target the element object itself with these operations (e.g., `path: "emails[type eq \"work\"]"`).
     * **Operator Restriction:** Clients MUST NOT use filter operators other than `eq` and `and` in a `path` value (e.g., `emails[type co \"work\"].value`).
     * **Single-Match Requirement:** Clients MUST NOT use a filter in a `path` value that matches more than one element of the multi-valued attribute.
+3.  **Remove:**
+    * Clients MAY use `remove` with a filter that identifies the element to remove, as described in [RFC7644], Section 3.5.2.2 (e.g., `path: "members[value eq \"2819c223\"]"` or `path: "emails[type eq \"work\"]"`; for a simple multi-valued attribute, `path: "colors[value eq \"blue\"]"`). The operator restriction and single-match requirement above apply to these filters.
+    * Clients MUST NOT include a `value` in a `remove` operation. For example, `{"op": "remove", "path": "members", "value": [{"value": "2819c223"}]}` MUST NOT be sent; use `path: "members[value eq \"2819c223\"]"` instead.
+    * Clients MUST NOT send `remove` on a multi-valued attribute without a filter unless the intent is to remove all of its values.
+    * Because [RFC7644], Section 3.5.2.2 defines no `value` for `remove` and specifies that a `remove` without a filter removes all values of the attribute, a Service Provider that receives a `remove` operation containing a `value` SHOULD either reject the request or interpret it as equivalent to a `remove` with a filter matching each listed value (e.g., `members[value eq \"2819c223\"]`). A Service Provider SHOULD NOT ignore the `value` and treat the operation as a removal of all values of the attribute. A Service Provider that rejects such a request MUST return an HTTP `400 Bad Request` and a `scimType` error of `invalidSyntax`.
 
 ### PATCH Error Handling
 
 A Service Provider that rejects a PATCH operation violating the constraints defined in this section MUST return an HTTP `400 Bad Request` and MUST use the `scimType` values as follows:
 
-* `invalidSyntax`: Missing `path`.
+* `invalidSyntax`: Missing `path`, or `remove` operation containing a `value`.
 * `invalidFilter`: Filter uses an operator other than `eq` and `and`.
 * `invalidPath`: Filter fails to target a specific sub-attribute, or filter matches more than one element in a multi-valued attribute.
 
