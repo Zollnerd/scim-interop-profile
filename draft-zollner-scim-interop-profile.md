@@ -13,6 +13,7 @@ keyword:
 pi: [toc, sortrefs, symrefs]
 
 docname: draft-zollner-scim-interop-profile-latest
+updates: 7643
 
 author:
   -
@@ -67,6 +68,8 @@ Absolute requirements and prohibitions in this document, expressed using the BCP
 Service Providers claiming conformance with this profile MUST include the `conformsTo` attribute, defined below, in their `ServiceProviderConfig` response, and MUST include the identifier of this profile, `urn:ietf:params:scim:profile:interop`, in its `profiles` sub-attribute. A Service Provider MAY list the identifiers of additional profiles it conforms to. A Service Provider that does not conform to this profile MUST NOT include this profile's identifier.
 
 A profile identifier is a URI. Identifiers registered with IANA as described in the IANA Considerations section are URNs in the `urn:ietf:params:scim:profile` namespace. Profiles that are not registered MAY be identified by any other URI. Clients MUST ignore profile identifiers they do not recognize.
+
+The `profiles` attribute is case exact. A Service Provider MUST return each profile identifier exactly as it is defined in the profile's specification or registry entry, and Clients compare profile identifiers octet by octet.
 
 `conformsTo`: A complex attribute that identifies the profiles the Service Provider conforms to. Singular, optional, mutability `readOnly`, returned `default`.
 
@@ -260,6 +263,10 @@ A Service Provider that does not want these values to be reused SHOULD NOT permi
 ## ServiceProviderConfig Schema Registry Entry
 
 IANA is requested to add Section 4 of this document to the References column of the "SCIM Server-Related Schema URIs" registry entry for `urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig`.
+
+## SCIM URN Sub-namespace Update
+
+This document updates the registration of the "scim" URN namespace specified in Section 10.2.1 of [RFC7643]. IANA is requested to change the definition of the `type` keyword in the Declaration of Syntactic Structure from "either 'schemas' or 'api'" to "either 'schemas', 'api', or 'profile'", and to add to the Process of Identifier Assignment that identifiers with namespace type "profile" (e.g., `urn:ietf:params:scim:profile`) are assigned through the "SCIM Profile Identifiers" registry defined in this document.
 
 ## SCIM Profile Identifiers Registry
 
