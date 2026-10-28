@@ -106,9 +106,11 @@ User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User
 
 ## Attribute and Schema Handling
 
-To ensure strict conformance and prevent unintended data loss or corruption, Service Providers MUST adhere to a strict handling model for attributes and schema extensions. When a SCIM request (e.g., `POST`, `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the request MUST be rejected.
+To ensure strict conformance and prevent unintended data loss or corruption, Service Providers MUST adhere to a strict handling model for attributes and schema extensions. When a SCIM request that creates or modifies a resource (`POST`, `PUT`, or `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the Service Provider MUST reject the request. The common attributes defined in [RFC7643], Section 3.1 are always considered defined.
 
-The Service Provider MUST return an HTTP `400 Bad Request` with a `scimType` error of `invalidValue` for such requests. Clients MUST consult the `/Schemas` endpoint and MUST NOT send attributes or schema URIs that the Service Provider does not advertise there.
+The Service Provider MUST return an HTTP `400 Bad Request` for such requests. The `scimType` is `invalidPath` if the `path` of a `PATCH` operation refers to an attribute that is not defined, and `invalidValue` otherwise. Clients MUST consult the `/Schemas` endpoint and MUST NOT send attributes or schema URIs that the Service Provider does not advertise there. The `schemas` attribute of a request MUST list the URI of every schema whose attributes appear in the request body ([RFC7643], Section 3).
+
+Attributes that are defined but have a `mutability` of `readOnly` are not undefined attributes and are not handled by this section. For `POST` and `PUT`, [RFC7644], Sections 3.3 and 3.5.1 specify that values provided for them are ignored. For `PATCH`, [RFC7644], Section 3.5.2 specifies that a client must not modify an attribute with a `mutability` of `readOnly` or `immutable`, and that an operation not compatible with an attribute's mutability results in an error response as defined in [RFC7644], Section 3.12.
 
 ## Canonical Values for Typed Attributes
 
@@ -197,7 +199,7 @@ A Service Provider that rejects a PATCH operation violating the constraints defi
 
 * `invalidSyntax`: Missing `path`, or `remove` operation containing a `value`.
 * `invalidFilter`: Filter uses an operator other than `eq` and `and`.
-* `invalidPath`: Filter fails to target a specific sub-attribute, or filter matches more than one element in a multi-valued attribute.
+* `invalidPath`: Filter fails to target a specific sub-attribute, filter matches more than one element in a multi-valued attribute, or `path` refers to an attribute that is not defined.
 
 ## Resource Lifecycle
 
