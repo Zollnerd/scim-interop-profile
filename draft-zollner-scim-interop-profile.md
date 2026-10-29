@@ -53,7 +53,7 @@ Source for this draft and an issue tracker can be found at https://github.com/Zo
 
 The SCIM 2.0 standard [RFC7643], [RFC7644] provides a framework for automating identity provisioning across organizational boundaries. While the base specification's flexibility enables broad applicability, it also permits a wide range of implementation choices — in areas such as `PATCH` syntax, pagination, filtering, case sensitivity, and error handling — that have proven to be common sources of interoperability failure in practice. Where implementations diverge on these points, the result is integrations that require bespoke configuration and maintenance for each pairing.
 
-This document specifies a profile for SCIM 2.0 that addresses these challenges by establishing required capabilities and restricting protocol variations that have proven problematic. Implementations conforming to this profile can be expected to interoperate without integration-specific customization.
+This document specifies a profile for SCIM 2.0 that addresses these challenges by establishing required capabilities and restricting protocol variations that have proven problematic. Implementations conforming to this profile can be expected to interoperate without protocol-level customization.
 
 # Notational Conventions
 
@@ -62,6 +62,8 @@ This document specifies a profile for SCIM 2.0 that addresses these challenges b
 # Scope and Conformance
 
 This profile applies to SCIM 2.0 Service Providers and Clients.
+
+This profile defines protocol behavior that is independent of the data being provisioned. It does not define which attributes a Service Provider requires, which attribute values a Client must send, or how a Client authenticates to a Service Provider beyond the requirements in the Security Considerations section. Profiles for specific use cases, such as the IPSIE SCIM Account Lifecycle profile, define those requirements and may be used together with this profile.
 
 Absolute requirements and prohibitions in this document, expressed using the BCP 14 keywords "MUST", "MUST NOT", "SHALL", "SHALL NOT", and "REQUIRED" as defined in the Notational Conventions section above, are addressed to Service Providers, Clients, or both. A Service Provider is conformant with this profile if it satisfies all such requirements addressed to Service Providers and all such requirements addressed to both roles. A Client is conformant with this profile if it satisfies all such requirements addressed to Clients and all such requirements addressed to both roles.
 
