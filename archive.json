@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-22T02:28:39.405049+00:00",
+  "timestamp": "2026-11-01T03:15:51.103042+00:00",
   "repo": "Zollnerd/scim-interop-profile",
   "labels": [
     {
@@ -353,6 +353,22 @@
           "updatedAt": "2026-10-20T20:13:31Z"
         }
       ]
+    },
+    {
+      "number": 17,
+      "id": "I_kwDORcWBWc8AAAABbA8pew",
+      "title": "Rate limits: minimum throughput must not be met by reads alone",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/issues/17",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "## Problem\n\nThe Rate Limiting section (https://github.com/Zollnerd/scim-interop-profile/blob/f1dcf0f247c5b73b1914bc90d0c648e9dc8a1995/draft-zollner-scim-interop-profile.md?plain=1#L222-L226, added in #16) specifies how a Service Provider signals throttling, but nothing about how limits apply across request types. A profile that sets a minimum throughput (for example, the IPSIE AL SCIM profile's 25 requests per second, openid/ipsie-scim-al#49) can be met by a Service Provider that accepts that rate for `GET` while throttling `POST`, `PATCH`, and `DELETE` far lower. Write requests carry provisioning and deprovisioning changes, so that is where integrations fail.\n\n## Proposed change\n\nWhen this profile, or a profile building on it, states a minimum request rate, the minimum applies to write requests (`POST`, `PUT`, `PATCH`, `DELETE`) as well as reads. A Service Provider MAY apply higher limits to reads.\n\n## Related\n\n- #11\n",
+      "createdAt": "2026-10-29T20:26:40Z",
+      "updatedAt": "2026-10-29T20:26:40Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
