@@ -299,4 +299,4 @@ The initial contents of the registry are:
 
 # Acknowledgements
 
-*(TODO: Add acknowledgements)*
+The author would like to thank Matthias Winter and Mike Kiser for their detailed reviews of earlier versions of this document.
