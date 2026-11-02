@@ -4,8 +4,9 @@
 
 SCIM                                                          D. Zollner
 Internet-Draft                                                      Okta
-Intended status: Standards Track                           15 April 2026
-Expires: 17 October 2026
+Updates: 7643 (if approved)                              2 November 2026
+Intended status: Standards Track                                        
+Expires: 6 May 2027
 
 
                    SCIM 2.0 Interoperability Profile
@@ -43,7 +44,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 17 October 2026.
+   This Internet-Draft will expire on 6 May 2027.
 
 Copyright Notice
 
@@ -78,18 +79,26 @@ Table of Contents
      6.5.  Updating Resources
        6.5.1.  General PATCH Constraints
        6.5.2.  Attribute-Specific Requirements
-       6.5.3.  Error Handling
+       6.5.3.  PATCH Error Handling
      6.6.  Resource Lifecycle
      6.7.  Concurrency and Versioning
      6.8.  Bulk Operations
      6.9.  Error Handling
        6.9.1.  Uniqueness Conflicts
+       6.9.2.  Rate Limiting
    7.  Security Considerations
      7.1.  Transport Security
      7.2.  Authentication
+     7.3.  Resource Addressing
+     7.4.  Identifier Reuse
    8.  IANA Considerations
+     8.1.  ServiceProviderConfig Schema Registry Entry
+     8.2.  SCIM URN Sub-namespace Update
+     8.3.  SCIM Profile Identifiers Registry
    9.  Acknowledgements
-   10. Normative References
+   10. References
+     10.1.  Normative References
+     10.2.  Informative References
    Author's Address
 
 1.  Discussion Venues
@@ -101,7 +110,7 @@ Table of Contents
 
 2.  Introduction
 
-   The SCIM 2.0 standard RFC7643 [RFC7644] provides a framework for
+   The SCIM 2.0 standard [RFC7643], [RFC7644] provides a framework for
    automating identity provisioning across organizational boundaries.
    While the base specification's flexibility enables broad
    applicability, it also permits a wide range of implementation choices
@@ -115,7 +124,7 @@ Table of Contents
    challenges by establishing required capabilities and restricting
    protocol variations that have proven problematic.  Implementations
    conforming to this profile can be expected to interoperate without
-   integration-specific customization.
+   protocol-level customization.
 
 3.  Notational Conventions
 
@@ -129,35 +138,53 @@ Table of Contents
 
    This profile applies to SCIM 2.0 Service Providers and Clients.
 
-   Requirements in this document, expressed using the normative terms
-   "MUST", "SHALL", and "REQUIRED" as defined in the Notational
-   Conventions section above, are addressed to Service Providers,
-   Clients, or both.  A Service Provider is conformant with this profile
-   if it satisfies all such requirements addressed to Service Providers
-   and all such requirements addressed to both roles.  A Client is
-   conformant with this profile if it satisfies all such requirements
-   addressed to Clients and all such requirements addressed to both
-   roles.
+   This profile defines protocol behavior that is independent of the
+   data being provisioned.  It does not define which attributes a
+   Service Provider requires, which attribute values a Client must send,
+   or how a Client authenticates to a Service Provider beyond the
+   requirements in the Security Considerations section.  Profiles for
+   specific use cases, such as the IPSIE SCIM Account Lifecycle profile,
+   define those requirements and may be used together with this profile.
+   Unless a requirement states otherwise, the requirements in this
+   document apply to every resource type that a Service Provider
+   implements, including resource types defined outside [RFC7643].
+
+   Absolute requirements and prohibitions in this document, expressed
+   using the BCP 14 keywords "MUST", "MUST NOT", "SHALL", "SHALL NOT",
+   and "REQUIRED" as defined in the Notational Conventions section
+   above, are addressed to Service Providers, Clients, or both.  A
+   Service Provider is conformant with this profile if it satisfies all
+   such requirements addressed to Service Providers and all such
+   requirements addressed to both roles.  A Client is conformant with
+   this profile if it satisfies all such requirements addressed to
+   Clients and all such requirements addressed to both roles.
 
    Service Providers claiming conformance with this profile MUST include
-   an interopProfileConformant attribute with a value of true in their
-   ServiceProviderConfig response.  This attribute is defined as
-   follows:
+   the conformsTo attribute, defined below, in their
+   ServiceProviderConfig response, and MUST include the identifier of
+   this profile, urn:ietf:params:scim:profile:interop, in its profiles
+   sub-attribute.  A Service Provider MAY list the identifiers of
+   additional profiles it conforms to.  A Service Provider that does not
+   conform to this profile MUST NOT include this profile's identifier.
 
-   *  Name: interopProfileConformant
+   A profile identifier is a URI.  Identifiers registered with IANA as
+   described in the IANA Considerations section are URNs in the
+   urn:ietf:params:scim:profile namespace.  Profiles that are not
+   registered MAY be identified by any other URI.  Clients MUST ignore
+   profile identifiers they do not recognize.
 
-   *  Type: Boolean
+   The profiles attribute is case exact.  A Service Provider MUST return
+   each profile identifier exactly as it is defined in the profile's
+   specification or registry entry, and Clients compare profile
+   identifiers octet by octet.
 
-   *  Multi-Valued: false
+   conformsTo: A complex attribute that identifies the profiles the
+   Service Provider conforms to.  Singular, optional, mutability
+   readOnly, returned default.
 
-   *  Required: false
-
-   *  Mutability: readOnly
-
-   *  Returned: default
-
-   A Service Provider that does not conform to this profile MUST either
-   omit this attribute or set its value to false.
+   *  profiles: A multi-valued list of profile identifiers.  Type:
+      String, case exact, required, mutability readOnly, returned
+      default, uniqueness none.
 
 5.  Data Model Requirements
 
@@ -187,49 +214,92 @@ Table of Contents
    endpoint, Service Providers MUST populate the id attribute and its
    value MUST equal the value of the name attribute.
 
+   Clients MUST send credentials on requests to the discovery endpoints
+   (/ServiceProviderConfig, /Schemas, and /ResourceTypes) in the same
+   manner as on requests to resource endpoints.
+
 5.2.  Case Sensitivity
 
    To ensure predictable and interoperable behavior, Service Providers
-   *MUST* implement case sensitivity consistently across both filtering
+   MUST implement case sensitivity consistently across both filtering
    operations and uniqueness constraint enforcement.  For any given
    attribute, the case sensitivity rules applied during a filter query
-   (e.g., userName eq "User.A") *MUST* be identical to the rules used to
+   (e.g., userName eq "User.A") MUST be identical to the rules used to
    detect a uniqueness conflict during a POST or PATCH operation.
 
    This profile requires adherence to the case sensitivity definitions
    specified in [RFC7643] for the following attributes:
 
-   Common Attributes ([RFC7643], Section 3.1): * id: caseExact is true.
-   Service Providers *MUST* treat abc-123 and ABC-123 as distinct
-   values. * externalId (optional): caseExact is true.  Service
-   Providers *MUST* treat ABC-123 and abc-123 as distinct values, if
-   externalId is supported.
+   Common Attributes ([RFC7643], Section 3.1):
+
+   *  id: caseExact is true.  Service Providers MUST treat abc-123 and
+      ABC-123 as distinct values.
+
+   *  externalId (optional): caseExact is true.  Service Providers MUST
+      treat ABC-123 and abc-123 as distinct values, if externalId is
+      supported.
 
    User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only
-   if the User resource type is implemented: * userName: caseExact is
-   false.  Service Providers *MUST* treat JSmith and jsmith as
-   equivalent.
+   if the User resource type is implemented:
+
+   *  userName: caseExact is false.  Service Providers MUST treat JSmith
+      and jsmith as equivalent.
+
+   *  emails.value: caseExact is false ([RFC7643], Sections 4.1.2 and
+      8.7.1).  Service Providers MUST treat user@example.com and
+      USER@EXAMPLE.COM as equivalent.
+
+   [RFC7644], Section 5 also requires Service Providers to apply PRECIS
+   preparation and comparison rules to userName before comparing it or
+   evaluating its uniqueness.  This profile does not change that
+   requirement.
 
 5.3.  Attribute and Schema Handling
 
    To ensure strict conformance and prevent unintended data loss or
-   corruption, Service Providers *MUST* adhere to a strict handling
-   model for attributes and schema extensions.  When a SCIM request
-   (e.g., POST, PATCH) contains attributes or schema URIs that are not
-   defined in the Service Provider's ResourceType or Schema definitions,
-   the request *MUST* be rejected.
+   corruption, Service Providers MUST adhere to a strict handling model
+   for attributes and schema extensions.  When a SCIM request that
+   creates or modifies a resource (POST, PUT, or PATCH) contains
+   attributes or schema URIs that are not defined in the Service
+   Provider's ResourceType or Schema definitions, the Service Provider
+   MUST reject the request.  The common attributes defined in [RFC7643],
+   Section 3.1 are always considered defined.
 
-   The Service Provider *MUST* return an HTTP 400 Bad Request with a
-   scimType error of invalidSyntax for such requests.
+   The Service Provider MUST return an HTTP 400 Bad Request for such
+   requests.  The scimType is invalidPath if the path of a PATCH
+   operation refers to an attribute that is not defined, and
+   invalidValue otherwise.  Clients MUST consult the /Schemas endpoint
+   and MUST NOT send attributes or schema URIs that the Service Provider
+   does not advertise there.  The schemas attribute of a request MUST
+   list the URI of every schema whose attributes appear in the request
+   body ([RFC7643], Section 3).
+
+   Attributes that are defined but have a mutability of readOnly are not
+   undefined attributes and are not handled by this section.  For POST
+   and PUT, [RFC7644], Sections 3.3 and 3.5.1 specify that values
+   provided for them are ignored.  For PATCH, [RFC7644], Section 3.5.2
+   specifies that a client must not modify an attribute with a
+   mutability of readOnly or immutable, and that an operation not
+   compatible with an attribute's mutability results in an error
+   response as defined in [RFC7644], Section 3.12.
 
 5.4.  Canonical Values for Typed Attributes
 
+   [RFC7643], Section 7 defines canonicalValues as suggested values and
+   allows Service Providers to restrict accepted values to them.  This
+   profile tightens that for the attributes below, so that Clients and
+   Service Providers agree on the permitted type values.
+
    For multi-valued complex attributes that include a type sub-attribute
-   (e.g., emails, phoneNumbers, ims, addresses), Service Providers MUST
-   declare the acceptable type values for each such attribute in that
-   attribute's canonicalValues property, as returned by /Schemas.
-   Clients MUST only use type values listed in the canonicalValues
-   property for that attribute.
+   and that classify their values by it (e.g., emails, phoneNumbers,
+   ims, addresses), Service Providers MUST declare the acceptable type
+   values in that attribute's canonicalValues property, as returned by
+   /Schemas.  Clients MUST only use type values listed in the
+   canonicalValues property for that attribute.  If the canonicalValues
+   property of such a type sub-attribute is empty or absent, the Service
+   Provider has declared no restriction, and a Client MAY use any type
+   value.  Comparison of type values follows the caseExact
+   characteristic of the type sub-attribute.
 
 6.  Protocol and Endpoint Requirements
 
@@ -253,28 +323,56 @@ Table of Contents
 
    All data exchange MUST use the JSON format as defined in [RFC7643].
    All requests and responses containing SCIM data MUST include a
-   Content-Type header with the value application/scim+json, as defined
-   in [RFC7644], Section 8.1.
+   Content-Type header whose media type is application/scim+json, as
+   defined in [RFC7644], Section 8.1.  Parameters on the media type,
+   such as charset, are permitted.  A Service Provider SHOULD also
+   accept requests with the media type application/json, which older
+   versions of SCIM used informally ([RFC7644], Section 8.1); Clients
+   MUST NOT rely on this and MUST send application/scim+json.
 
    To aid in troubleshooting and client identification, Clients MUST
-   include a User-Agent header in all HTTP requests.  The header's value
-   should be meaningful, for example, identifying the name of the client
-   software.
+   include a User-Agent header ([RFC9110], Section 10.1.5) in all HTTP
+   requests.  The header's value is expected to identify the client
+   software, for example by name and version.
 
 6.3.  Filtering
 
    The filter query parameter MUST be supported.  Service Providers MUST
    support the eq and and operators.  To promote interoperability,
-   Clients MUST NOT use operators other than eq and and.
+   Clients MUST NOT use operators other than eq and and, whether the
+   filter is sent in the filter query parameter of a GET request or in
+   the body of a POST query to /.search ([RFC7644], Section 3.4.3).
+   Service Providers MUST support filtering with the eq operator on
+   every attribute for which they enforce a uniqueness constraint (e.g.,
+   userName), including when that attribute is a sub-attribute of a
+   multi-valued attribute (e.g., emails.value), so that Clients can
+   identify the resources involved in a uniqueness conflict, to the
+   extent that those resources are accessible to the requesting Client.
+   Service Providers that support the externalId attribute MUST also
+   support filtering with the eq operator on externalId.
 
-   The use of filters in the URI for any HTTP method other than GET
-   (e.g., PATCH /Users?filter=...) *MUST NOT* be used.
+   Clients MAY use filters in read operations: GET requests using the
+   filter query parameter, and POST queries to the /.search endpoint
+   with the filter in the request body.  Clients MUST NOT include a
+   filter in the HTTP request URI of a request that uses any HTTP method
+   other than GET (e.g., PATCH /Users?filter=...).  This restriction
+   applies only to the HTTP request URI.  It does not apply to a filter
+   in the path attribute of a PATCH operation ([RFC7644], Section 3.5.2)
+   or to a filter in the body of a POST query to /.search.
 
    When a filter expression is applied to a resource-type endpoint
    (e.g., /Users, /Groups) and references an attribute not defined in
-   any of that resource type's schemas, Service Providers MUST return an
-   HTTP 400 error with a scimType of invalidFilter, as defined in
-   [RFC7644], Section 3.12.
+   any of that resource type's schemas, or an attribute that the Service
+   Provider does not support filtering on, Service Providers MUST return
+   an HTTP 400 error with a scimType of invalidFilter, as defined in
+   [RFC7644], Section 3.12.  A Service Provider MUST NOT ignore such a
+   filter and return unfiltered results.
+
+   Service Providers MUST support the excludedAttributes query parameter
+   ([RFC7644], Section 3.4.2.5).  A Group resource can contain a very
+   large number of members, so Clients SHOULD include
+   excludedAttributes=members in requests that return groups unless they
+   need the membership.
 
 6.4.  Pagination
 
@@ -286,12 +384,34 @@ Table of Contents
 
    *  Cursor-based pagination, as defined in [RFC9865].
 
+   Clients MUST support both index-based and cursor-based pagination.
+   When a response contains nextCursor, Clients MUST continue retrieving
+   results using it, including when the Client did not send a cursor
+   parameter ([RFC9865], Section 2.3).  Clients MUST NOT treat a
+   response as the final page unless it indicates so under the
+   pagination method in use.  For index-based pagination, a Client MUST
+   continue requesting pages until a response contains no Resources, and
+   MUST NOT rely on totalResults alone to determine that no more pages
+   remain.
+
+   Service Providers MUST include the pagination attribute defined in
+   [RFC9865], Section 4 in their ServiceProviderConfig response,
+   including the cursor and index sub-attributes.  A Service Provider
+   that receives a pagination query parameter (startIndex or cursor) for
+   a method it does not support MUST return an HTTP 400 Bad Request
+   error and MUST NOT ignore the parameter.
+
    If the count parameter is omitted from a request, Service Providers
-   SHOULD return at least 100 results by default.  Service Providers
-   MUST support a client-requested count value of at least 100.  Service
-   Providers SHOULD enforce a server-specified maximum number of results
-   per page and MUST return fewer results than requested when the client
-   specifies a count value that exceeds that limit.
+   SHOULD return at least 100 results by default.  A Service Provider
+   that enforces a maximum number of results per page MUST set that
+   maximum to at least 100, and MUST truncate to that maximum, rather
+   than returning an error, when the Client specifies a count value that
+   exceeds it.
+
+   When a request does not specify sortBy, Service Providers SHOULD
+   return resources in the same order across pages of the same query, so
+   that a Client paging through the results does not miss or repeat
+   resources.
 
 6.5.  Updating Resources
 
@@ -306,48 +426,66 @@ Table of Contents
 
 6.5.1.1.  Mandatory Use of the 'path' Attribute
 
-   Every operation object within the Operations array *MUST* contain a
-   path attribute.  Clients *MUST NOT* issue "path-less" PATCH
-   operations where the target attribute is implied by the keys within
-   the value object.
+   Every operation object within the Operations array MUST contain a
+   path attribute.  Clients MUST NOT issue "path-less" PATCH operations
+   where the target attribute is implied by the keys within the value
+   object.
 
-   Service Providers *MUST* reject PATCH requests containing operations
-   that lack a path attribute with an HTTP 400 Bad Request and a
-   scimType error of invalidSyntax.
+   Service Providers MAY reject PATCH requests containing operations
+   that lack a path attribute.  A Service Provider that rejects such a
+   request MUST return an HTTP 400 Bad Request and a scimType error of
+   invalidSyntax.
 
 6.5.1.2.  Multi-Attribute Updates
 
    When a Client needs to update multiple attributes in a single HTTP
-   request, it *MUST* provide a separate operation entry within the
+   request, it MUST provide a separate operation entry within the
    Operations array for each unique attribute path.
+
+6.5.1.3.  Operation Names
+
+   Clients MUST send the op member of each operation in lowercase (add,
+   remove, or replace), as the values are given in [RFC7644],
+   Section 3.5.2.  Service Providers MUST accept the op member
+   regardless of letter case.
 
 6.5.2.  Attribute-Specific Requirements
 
 6.5.2.1.  Singular Attributes (Simple and Complex)
 
    1.  *Simple Attribute Operation Equivalence:* For singular simple
-       attributes (e.g., userName, active), Service Providers *MUST*
-       treat add and replace as functionally equivalent.
+       attributes (e.g., userName, active), Service Providers MUST treat
+       add and replace as functionally equivalent.
 
    2.  *Complex Sub-attribute Targeting:* When only intending to modify
        the value of a specific sub-attribute of a complex attribute,
-       Clients *SHOULD* target that sub-attribute using dot-notation
+       Clients SHOULD target that sub-attribute using dot-notation
        (e.g., path: "name.givenName").
 
    3.  *Complex Attribute Operations:*
 
        *  *Replace:* If a Client targets a singular complex attribute in
           its entirety (e.g., path: "name") using the replace operation,
-          the value *MUST* be a JSON object containing all sub-
-          attributes the Client intends to persist.  The Service
-          Provider *MUST* replace the entire complex attribute with the
-          provided object.
+          the value MUST be a JSON object.  As specified in [RFC7644],
+          Section 3.5.2.3, the Service Provider MUST update only the
+          provided sub-attributes and MUST preserve the existing values
+          of omitted sub-attributes.
 
        *  *Add:* If a Client targets a singular complex attribute in its
-          entirety using the add operation, the value *MUST* be a JSON
-          object.  The Service Provider *MUST* perform a partial merge,
+          entirety using the add operation, the value MUST be a JSON
+          object.  The Service Provider MUST perform a partial merge,
           updating only the provided sub-attributes and preserving
-          existing values for omitted sub-attributes.
+          existing values for omitted sub-attributes.  ([RFC7644],
+          Section 3.5.2.1 states that if the target location exists the
+          value is replaced, but does not state whether that applies to
+          the whole complex attribute or to the provided sub-attributes;
+          this profile specifies the latter so that add and replace
+          behave identically.)
+
+       *  *Clearing a sub-attribute:* To clear a sub-attribute of a
+          singular complex attribute, a Client MUST use a remove
+          operation targeting that sub-attribute (e.g., path:
+          "name.familyName").
 
 6.5.2.2.  Multi-valued Attributes (Simple and Complex)
 
@@ -359,38 +497,115 @@ Table of Contents
 
        *  *Replace:* If a Client targets a multi-valued attribute path
           without a filter (e.g., path: "emails" or path: "roles") using
-          the replace operation, the value *MUST* be an array of
-          objects/values.  The Service Provider *MUST* replace the
-          entire collection with the provided array.
+          the replace operation, the value MUST be an array of objects/
+          values.  The Service Provider MUST replace the entire
+          collection with the provided array.
 
        *  *Add:* If a Client targets a multi-valued attribute path
-          without a filter using the add operation, the value *MUST* be
-          an array of objects/values.  The Service Provider *MUST*
-          append the provided values to the existing collection.
+          without a filter using the add operation, the value MUST be an
+          array of objects/values.  The Service Provider MUST append
+          each provided value to the existing collection if it is not
+          already present, and MUST NOT change the collection or return
+          an error for a value that is already present ([RFC7644],
+          Section 3.5.2.1).
 
    2.  *Filtering Constraints:* When using a filter to target an element
-       within a multi-valued complex attribute:
+       within a multi-valued attribute:
 
-       *  *Sub-attribute Requirement:* The path *MUST* target a specific
-          sub-attribute of the matched element (e.g., path: "emails[type
-          eq \"work\"].value").  Targeting the element object itself
-          (e.g., path: "emails[type eq \"work\"]") is *PROHIBITED*.
+       *  *Sub-attribute Requirement:* For add and replace, the path
+          MUST target a specific sub-attribute of the matched element
+          (e.g., path: "emails[type eq \"work\"].value").  Clients MUST
+          NOT target the element object itself with these operations
+          (e.g., path: "emails[type eq \"work\"]").
 
-6.5.3.  Error Handling
+       *  *Operator Restriction:* Clients MUST NOT use filter operators
+          other than eq and and in a path value (e.g., emails[type co
+          \"work\"].value).
 
-   Service Providers *MAY* return an HTTP 400 Bad Request for any PATCH
-   operation that violates these constraints.  Specific scimType values
-   should be used as follows: * invalidSyntax: Missing path or use of
-   prohibited operators. * invalidFilter: Filter matches more than one
-   element in a multi-valued attribute. * invalidPath: Filter fails to
-   target a specific sub-attribute.
+       *  *Single-Match Requirement:* Clients MUST NOT use a filter in a
+          path value that matches more than one element of the multi-
+          valued attribute.  A Client can combine sub-attribute
+          comparisons with and to select a single element (e.g., path:
+          "emails[type eq \"work\" and value eq
+          \"a@example.com\"].primary").
+
+       *  *No-Match Requirement for add and replace:* Clients MUST NOT
+          use a filter in the path of an add or replace operation that
+          matches no element.  To add an element to a multi-valued
+          complex attribute, a Client uses a collection-level add with
+          the complete element.  If such a filter matches no element,
+          the Service Provider MUST NOT create an element and MUST
+          return an HTTP 400 Bad Request with a scimType of noTarget
+          ([RFC7644], Sections 3.5.2.3 and 3.12).
+
+   3.  *Remove:*
+
+       *  *Filtered remove on a complex multi-valued attribute
+          ([RFC7644], Section 3.5.2.2):* Clients MAY use remove with a
+          filter that selects the element to remove (e.g., path:
+          "members[value eq \"2819c223\"]" or path: "emails[type eq
+          \"work\"]").  The operator restriction and single-match
+          requirement above apply.  Unlike add and replace, a remove
+          whose filter matches no element is not an error: the Service
+          Provider makes no change to the resource and returns a success
+          response, so that a Client can safely retry a remove.
+
+       *  *Filtered remove on a simple multi-valued attribute (defined
+          by this profile):* [RFC7644] defines no filter syntax for
+          these attributes, because a valuePath filter selects on sub-
+          attributes of the parent attribute ([RFC7644],
+          Section 3.4.2.2) and a simple attribute has none.  This
+          profile defines the following syntax.  A Client MAY remove one
+          element by sending remove with a path of the form
+          attribute[value eq "x"], where value refers to the element
+          itself (e.g., path: "colors[value eq \"blue\"]").  The
+          operator restriction and single-match requirement above apply,
+          and the no-match behavior described above also applies to this
+          form.  A Service Provider MUST support this form for every
+          simple multi-valued attribute it implements.  For a simple
+          multi-valued attribute, add and replace always apply to the
+          whole collection, and Clients MUST NOT use a filter with them.
+
+       *  *remove without a filter ([RFC7644], Section 3.5.2.2):* this
+          removes all values of the attribute.  Clients MUST NOT send it
+          unless that is the intent.
+
+       *  *value in a remove operation (defined by this profile):*
+          [RFC7644] defines no rules for a value in a remove operation
+          and gives no example of one.  Clients MUST NOT include a value
+          in a remove operation (e.g., {"op": "remove", "path":
+          "members", "value": [{"value": "2819c223"}]} MUST NOT be sent;
+          use path: "members[value eq \"2819c223\"]").  A Service
+          Provider that receives such a request SHOULD either reject it
+          or interpret it as a filtered remove of each listed value, and
+          SHOULD NOT ignore the value and remove all values of the
+          attribute.  A Service Provider that rejects it MUST return an
+          HTTP 400 Bad Request with a scimType of invalidSyntax.
+
+6.5.3.  PATCH Error Handling
+
+   A Service Provider that rejects a PATCH operation violating the
+   constraints defined in this section MUST return an HTTP 400 Bad
+   Request and MUST use the scimType values as follows:
+
+   *  invalidSyntax: Missing path, or remove operation containing a
+      value.
+
+   *  invalidFilter: Filter uses an operator other than eq and and.
+
+   *  invalidPath: Filter fails to target a specific sub-attribute,
+      filter matches more than one element in a multi-valued attribute,
+      or path refers to an attribute that is not defined.
+
+   *  noTarget: Filter in the path of an add or replace operation
+      matches no element.
 
 6.6.  Resource Lifecycle
 
-   Service Providers *MUST NOT* treat a PATCH request as a deletion of
-   the resource.  A resource modified via PATCH *MUST* be retained by
-   the Service Provider.  Deletion of a resource can only be performed
-   via an HTTP DELETE request.
+   Service Providers MUST NOT treat a PATCH request as a deletion of the
+   resource.  A resource modified via PATCH MUST be retained by the
+   Service Provider.  Deletion of a resource can only be performed via
+   an HTTP DELETE request.
 
    Service Providers MUST return 404 Not Found in response to any
    operation targeting a deleted resource and MUST omit deleted
@@ -403,16 +618,31 @@ Table of Contents
 
    Service Providers MUST NOT respond to an HTTP DELETE request by
    modifying resource attributes rather than deleting the resource
-   (e.g., setting a User's active attribute to false).  A successful
-   DELETE request MUST result in the resource being deleted.
+   (e.g., setting a User's active attribute to false).
 
 6.7.  Concurrency and Versioning
 
-   Clients *MUST NOT* include HTTP headers related to conditional
-   requests or entity tags (ETags), such as If-Match, If-None-Match, If-
-   Modified-Since, or If-Unmodified-Since.  Service Providers are not
-   expected to support these headers and *MAY* ignore them or reject the
-   request.
+   Clients MUST NOT include HTTP headers related to conditional requests
+   or entity tags (ETags), such as If-Match, If-None-Match, If-Modified-
+   Since, or If-Unmodified-Since.  A Service Provider that receives such
+   a header and does not evaluate it SHOULD reject the request with HTTP
+   400 Bad Request rather than ignoring the header, since a Client that
+   sends such a header expects it to be enforced.
+
+   This requirement means the profile provides no protection against
+   lost updates when more than one Client modifies the same resource,
+   including multiple identity providers provisioning to the same
+   Service Provider.  This is a deliberate trade-off in favor of keeping
+   both Clients and Service Providers simple.  Because every PATCH
+   operation must include a path, a Client's update affects only the
+   attributes it targets.
+
+   Service Providers MUST NOT send a response to a write request (POST,
+   PUT, PATCH, or DELETE) until the write has been applied and any lock
+   or other in-progress state held on the resource for that request has
+   been released.  A request that a Client sends after receiving that
+   response MUST NOT be rejected because the earlier request is still
+   being processed.
 
 6.8.  Bulk Operations
 
@@ -424,41 +654,147 @@ Table of Contents
 
    When a POST or PATCH request attempts to create or modify a resource
    in a way that violates a uniqueness constraint (e.g., for attributes
-   like userName or emails), the Service Provider *MUST* return an HTTP
-   409 Conflict response.  The response body *MUST* also include a SCIM
-   error detail with the scimType set to uniqueness, as defined in
-   [RFC7644], Section 3.12.
+   like userName or emails), the Service Provider MUST return an HTTP
+   409 Conflict response ([RFC9110], Section 15.5.10).  The response
+   body MUST also include a SCIM error detail with the scimType set to
+   uniqueness, as defined in [RFC7644], Section 3.12.
+
+6.9.2.  Rate Limiting
+
+   Service Providers that limit the rate of requests SHOULD respond with
+   HTTP 429 Too Many Requests ([RFC6585], Section 4) and SHOULD include
+   a Retry-After header ([RFC9110], Section 10.2.3) indicating how long
+   the Client should wait before retrying.  A Service Provider MAY
+   instead respond with HTTP 503 Service Unavailable ([RFC9110],
+   Section 15.6.4), which MAY also include a Retry-After header.
+
+   When a Client receives a 429 or 503 response, it MUST NOT retry the
+   request before the time indicated by the Retry-After header has
+   elapsed.  A Client MUST accept both forms of the Retry-After header
+   value, an HTTP-date and a number of seconds ([RFC9110],
+   Section 10.2.3).  If the response does not include a Retry-After
+   header, the Client MUST wait before retrying, MUST increase the wait
+   on each consecutive retry of the same request, and MUST stop retrying
+   after a bounded number of attempts.
 
 7.  Security Considerations
 
 7.1.  Transport Security
 
    All communication between a Client and Service Provider MUST be
-   secured using Transport Layer Security (TLS) [RFC8446].
-   Implementations MUST support TLS 1.3 and MAY support TLS 1.2.
+   secured using Transport Layer Security (TLS).  Implementations MUST
+   follow the recommendations in BCP 195 [RFC9325].
 
 7.2.  Authentication
 
    The use of HTTP Basic Authentication over TLS is NOT RECOMMENDED.
+   Alternatives include OAuth 2.0 Bearer Tokens [RFC6750].
+
+7.3.  Resource Addressing
+
+   This profile requires that resources be addressed by id rather than
+   by other attribute values in the URI path.  If a resource could also
+   be addressed by a mutable attribute such as userName, the value of
+   that attribute could be transferred between resources, and a request
+   addressed to the old value would modify a different resource than the
+   Client intended.  For example, User A holds the userName "alice" and
+   User B holds the userName "bob".  If those values are swapped, so
+   that A now holds "bob" and B now holds "alice", a Client issuing
+   PATCH /Users/alice with entitlements or role assignments intended for
+   the original User A would instead modify User B.  The id attribute is
+   assigned by the Service Provider and is stable and non-reassignable
+   ([RFC7643], Section 3.1), which removes this risk.
+
+7.4.  Identifier Reuse
+
+   Resources have two kinds of identifiers.  The id attribute is
+   assigned by the Service Provider, is immutable, and is non-
+   reassignable ([RFC7643], Section 3.1).  Attributes such as userName
+   and emails.value are subject to uniqueness constraints but are set by
+   Clients and can usually be changed.  Their values can also be reused
+   over time.  For example, the userName "jsmith" can belong to one
+   person and later, after that person's resource is deleted, to a
+   different person.
+
+   A Service Provider that supports the HTTP DELETE method makes the
+   unique identifiers of a deleted resource, such as userName, available
+   for reassignment to a new resource, as described in the Resource
+   Lifecycle section.  Because the values of these attributes can change
+   and be reused, Clients, Service Providers, and other systems SHOULD
+   NOT use them as stable references to a resource, for example as the
+   key for access grants or role assignments.  They SHOULD use id for
+   that purpose.  A record keyed on a reusable value can end up applying
+   to a different person than the one it was created for.
 
 8.  IANA Considerations
 
-   Prior to being published as an RFC, this document requests that the
-   IANA SCIM Server-Related Schema URIs registry entry for
-   urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig be
-   updated to include or reference the interopProfileConformant
-   attribute defined in Section 4 of this document.
+8.1.  ServiceProviderConfig Schema Registry Entry
+
+   IANA is requested to add Section 4 of this document to the References
+   column of the "SCIM Server-Related Schema URIs" registry entry for
+   urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig.
+
+8.2.  SCIM URN Sub-namespace Update
+
+   This document updates the registration of the "scim" URN namespace
+   specified in Section 10.2.1 of [RFC7643].  IANA is requested to
+   change the definition of the type keyword in the Declaration of
+   Syntactic Structure from "either 'schemas' or 'api'" to "either
+   'schemas', 'api', or 'profile'", and to add to the Process of
+   Identifier Assignment that identifiers with namespace type "profile"
+   (e.g., urn:ietf:params:scim:profile) are assigned through the "SCIM
+   Profile Identifiers" registry defined in this document.
+
+8.3.  SCIM Profile Identifiers Registry
+
+   IANA is requested to create a registry called "SCIM Profile
+   Identifiers" under the "System for Cross-domain Identity Management
+   (SCIM) Schema URIs" registry group at
+   https://www.iana.org/assignments/scim
+   (https://www.iana.org/assignments/scim).  The registration procedure
+   is Specification Required [RFC8126].  Designated experts evaluate
+   registrations for relevance to SCIM-based systems, for duplication or
+   conflict with other profile definitions, and for whether the
+   referenced specification defines conformance clearly enough for
+   independent implementations.
+
+   A registration MUST include a profile identifier, a descriptive name,
+   and a reference to the profile's specification.  Registered
+   identifiers use the form urn:ietf:params:scim:profile:{name}, where
+   {name} is an ASCII string that conforms to URN syntax requirements
+   [RFC8141].  Once an identifier has been allocated, it MUST NOT be
+   reallocated for a different purpose.  Registration is optional;
+   profiles MAY be identified by unregistered URIs.
+
+   The initial contents of the registry are:
+
+    +======================================+================+=========+
+    | Profile Identifier                   |Name            |Reference|
+    +======================================+================+=========+
+    | urn:ietf:params:scim:profile:interop |SCIM 2.0        |Section 4|
+    |                                      |Interoperability|of this  |
+    |                                      |Profile         |document |
+    +--------------------------------------+----------------+---------+
+
+                                  Table 1
 
 9.  Acknowledgements
 
-   _(TODO: Add acknowledgements)_
+   The author would like to thank Matthias Winter and Mike Kiser for
+   their detailed reviews of earlier versions of this document.
 
-10.  Normative References
+10.  References
+
+10.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC6585]  Nottingham, M. and R. Fielding, "Additional HTTP Status
+              Codes", RFC 6585, DOI 10.17487/RFC6585, April 2012,
+              <https://www.rfc-editor.org/info/rfc6585>.
 
    [RFC7643]  Hunt, P., Ed., Grizzle, K., Wahlstroem, E., and C.
               Mortimore, "System for Cross-domain Identity Management:
@@ -470,19 +806,42 @@ Table of Contents
               Management: Protocol", RFC 7644, DOI 10.17487/RFC7644,
               September 2015, <https://www.rfc-editor.org/info/rfc7644>.
 
+   [RFC8126]  Cotton, M., Leiba, B., and T. Narten, "Guidelines for
+              Writing an IANA Considerations Section in RFCs", BCP 26,
+              RFC 8126, DOI 10.17487/RFC8126, June 2017,
+              <https://www.rfc-editor.org/info/rfc8126>.
+
+   [RFC8141]  Saint-Andre, P. and J. Klensin, "Uniform Resource Names
+              (URNs)", RFC 8141, DOI 10.17487/RFC8141, April 2017,
+              <https://www.rfc-editor.org/info/rfc8141>.
+
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
-   [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
-              Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
-              <https://www.rfc-editor.org/info/rfc8446>.
+   [RFC9110]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
+              Ed., "HTTP Semantics", STD 97, RFC 9110,
+              DOI 10.17487/RFC9110, June 2022,
+              <https://www.rfc-editor.org/info/rfc9110>.
+
+   [RFC9325]  Sheffer, Y., Saint-Andre, P., and T. Fossati,
+              "Recommendations for Secure Use of Transport Layer
+              Security (TLS) and Datagram Transport Layer Security
+              (DTLS)", BCP 195, RFC 9325, DOI 10.17487/RFC9325, November
+              2022, <https://www.rfc-editor.org/info/rfc9325>.
 
    [RFC9865]  Peterson, M., Ed., Zollner, D., and A. Sehgal, "Cursor-
               Based Pagination of System of Cross-domain Identity
               Management (SCIM) Resources", RFC 9865,
               DOI 10.17487/RFC9865, October 2025,
               <https://www.rfc-editor.org/info/rfc9865>.
+
+10.2.  Informative References
+
+   [RFC6750]  Jones, M. and D. Hardt, "The OAuth 2.0 Authorization
+              Framework: Bearer Token Usage", RFC 6750,
+              DOI 10.17487/RFC6750, October 2012,
+              <https://www.rfc-editor.org/info/rfc6750>.
 
 Author's Address
 
