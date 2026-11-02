@@ -111,6 +111,8 @@ User Schema Attributes ([RFC7643], Section 4.1.1) -- applicable only if the User
 *   `userName`: `caseExact` is `false`. Service Providers MUST treat `JSmith` and `jsmith` as equivalent.
 *   `emails.value`: `caseExact` is `false` ([RFC7643], Sections 4.1.2 and 8.7.1). Service Providers MUST treat `user@example.com` and `USER@EXAMPLE.COM` as equivalent.
 
+[RFC7644], Section 5 also requires Service Providers to apply PRECIS preparation and comparison rules to `userName` before comparing it or evaluating its uniqueness. This profile does not change that requirement.
+
 ## Attribute and Schema Handling
 
 To ensure strict conformance and prevent unintended data loss or corruption, Service Providers MUST adhere to a strict handling model for attributes and schema extensions. When a SCIM request that creates or modifies a resource (`POST`, `PUT`, or `PATCH`) contains attributes or schema URIs that are not defined in the Service Provider's `ResourceType` or `Schema` definitions, the Service Provider MUST reject the request. The common attributes defined in [RFC7643], Section 3.1 are always considered defined.
