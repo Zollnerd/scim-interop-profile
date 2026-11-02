@@ -121,7 +121,9 @@ Attributes that are defined but have a `mutability` of `readOnly` are not undefi
 
 ## Canonical Values for Typed Attributes
 
-For multi-valued complex attributes that include a `type` sub-attribute (e.g., `emails`, `phoneNumbers`, `ims`, `addresses`), Service Providers MUST declare the acceptable `type` values for each such attribute in that attribute's `canonicalValues` property, as returned by `/Schemas`. Clients MUST only use `type` values listed in the `canonicalValues` property for that attribute.
+[RFC7643], Section 7 defines `canonicalValues` as suggested values and allows Service Providers to restrict accepted values to them. This profile tightens that for the attributes below, so that Clients and Service Providers agree on the permitted `type` values.
+
+For multi-valued complex attributes that include a `type` sub-attribute and that classify their values by it (e.g., `emails`, `phoneNumbers`, `ims`, `addresses`), Service Providers MUST declare the acceptable `type` values in that attribute's `canonicalValues` property, as returned by `/Schemas`. Clients MUST only use `type` values listed in the `canonicalValues` property for that attribute. If the `canonicalValues` property of such a `type` sub-attribute is empty or absent, the Service Provider has declared no restriction, and a Client MAY use any `type` value. Comparison of `type` values follows the `caseExact` characteristic of the `type` sub-attribute.
 
 # Protocol and Endpoint Requirements
 
