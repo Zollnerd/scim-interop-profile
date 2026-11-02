@@ -145,6 +145,8 @@ Clients MAY use filters in read operations: `GET` requests using the `filter` qu
 
 When a filter expression is applied to a resource-type endpoint (e.g., `/Users`, `/Groups`) and references an attribute not defined in any of that resource type's schemas, or an attribute that the Service Provider does not support filtering on, Service Providers MUST return an HTTP 400 error with a `scimType` of `invalidFilter`, as defined in [RFC7644], Section 3.12. A Service Provider MUST NOT ignore such a filter and return unfiltered results.
 
+Service Providers MUST support the `excludedAttributes` query parameter ([RFC7644], Section 3.4.2.5). A `Group` resource can contain a very large number of members, so Clients SHOULD include `excludedAttributes=members` in requests that return groups unless they need the membership.
+
 ## Pagination
 
 To ensure the reliable handling of large data sets, Service Providers MUST implement at least one of the following pagination methods for all list operations:
