@@ -93,6 +93,8 @@ The schema and resource type definitions for `ServiceProviderConfig`, `Schema`, 
 
 For every `ResourceType` resource returned by the `/ResourceTypes` endpoint, Service Providers MUST populate the `id` attribute and its value MUST equal the value of the `name` attribute.
 
+Clients MUST send credentials on requests to the discovery endpoints (`/ServiceProviderConfig`, `/Schemas`, and `/ResourceTypes`) in the same manner as on requests to resource endpoints.
+
 ## Case Sensitivity
 
 To ensure predictable and interoperable behavior, Service Providers MUST implement case sensitivity consistently across both filtering operations and uniqueness constraint enforcement. For any given attribute, the case sensitivity rules applied during a filter query (e.g., `userName eq "User.A"`) MUST be identical to the rules used to detect a uniqueness conflict during a `POST` or `PATCH` operation.
