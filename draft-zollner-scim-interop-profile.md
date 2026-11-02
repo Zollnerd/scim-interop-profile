@@ -137,7 +137,7 @@ Service Providers MUST use `/{endpoint}/{id}` as the canonical URI for addressin
 
 ## Data Format and HTTP Headers
 
-All data exchange MUST use the JSON format as defined in [RFC7643]. All requests and responses containing SCIM data MUST include a `Content-Type` header with the value `application/scim+json`, as defined in [RFC7644], Section 8.1.
+All data exchange MUST use the JSON format as defined in [RFC7643]. All requests and responses containing SCIM data MUST include a `Content-Type` header whose media type is `application/scim+json`, as defined in [RFC7644], Section 8.1. Parameters on the media type, such as `charset`, are permitted. A Service Provider SHOULD also accept requests with the media type `application/json`, which older versions of SCIM used informally ([RFC7644], Section 8.1); Clients MUST NOT rely on this and MUST send `application/scim+json`.
 
 To aid in troubleshooting and client identification, Clients MUST include a `User-Agent` header ([RFC9110], Section 10.1.5) in all HTTP requests. The header's value is expected to identify the client software, for example by name and version.
 
