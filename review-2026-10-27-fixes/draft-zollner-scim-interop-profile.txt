@@ -562,9 +562,9 @@ Table of Contents
           operator restriction and single-match requirement above apply,
           and the no-match behavior described above also applies to this
           form.  A Service Provider MUST support this form for every
-          simple multi-valued attribute it implements. add and replace
-          on a simple multi-valued attribute always apply to the whole
-          collection, and Clients MUST NOT use a filter with them.
+          simple multi-valued attribute it implements.  For a simple
+          multi-valued attribute, add and replace always apply to the
+          whole collection, and Clients MUST NOT use a filter with them.
 
        *  *remove without a filter ([RFC7644], Section 3.5.2.2):* this
           removes all values of the attribute.  Clients MUST NOT send it
