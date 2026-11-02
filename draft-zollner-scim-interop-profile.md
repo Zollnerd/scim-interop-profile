@@ -275,8 +275,6 @@ Resources have two kinds of identifiers. The `id` attribute is assigned by the S
 
 A Service Provider that supports the HTTP `DELETE` method makes the unique identifiers of a deleted resource, such as `userName`, available for reassignment to a new resource, as described in the Resource Lifecycle section. Because the values of these attributes can change and be reused, Clients, Service Providers, and other systems SHOULD NOT use them as stable references to a resource, for example as the key for access grants or role assignments. They SHOULD use `id` for that purpose. A record keyed on a reusable value can end up applying to a different person than the one it was created for.
 
-A Service Provider that does not want these values to be reused SHOULD NOT permit the resource to be deleted, and SHOULD instead retain the resource with the `active` attribute set to `false`. The `active` attribute is a Boolean and cannot distinguish a temporarily disabled resource from one that is permanently disabled and retained to prevent reuse of its identifiers.
-
 # IANA Considerations
 
 ## ServiceProviderConfig Schema Registry Entry
