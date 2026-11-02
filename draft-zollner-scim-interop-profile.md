@@ -247,7 +247,7 @@ When a `POST` or `PATCH` request attempts to create or modify a resource in a wa
 
 Service Providers that limit the rate of requests SHOULD respond with HTTP `429 Too Many Requests` ([RFC6585], Section 4) and SHOULD include a `Retry-After` header ([RFC9110], Section 10.2.3) indicating how long the Client should wait before retrying. A Service Provider MAY instead respond with HTTP `503 Service Unavailable` ([RFC9110], Section 15.6.4), which MAY also include a `Retry-After` header.
 
-When a Client receives a `429` or `503` response, it MUST NOT retry the request before the time indicated by the `Retry-After` header has elapsed. If the response does not include a `Retry-After` header, the Client MUST apply a backoff before retrying.
+When a Client receives a `429` or `503` response, it MUST NOT retry the request before the time indicated by the `Retry-After` header has elapsed. A Client MUST accept both forms of the `Retry-After` header value, an HTTP-date and a number of seconds ([RFC9110], Section 10.2.3). If the response does not include a `Retry-After` header, the Client MUST wait before retrying, MUST increase the wait on each consecutive retry of the same request, and MUST stop retrying after a bounded number of attempts.
 
 # Security Considerations
 
