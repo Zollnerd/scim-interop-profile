@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-11-01T03:15:51.103042+00:00",
+  "timestamp": "2026-11-03T04:35:40.784157+00:00",
   "repo": "Zollnerd/scim-interop-profile",
   "labels": [
     {
@@ -86,7 +86,7 @@
       "labels": [],
       "body": "**Section:** [\u00a76.6](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.6)\n\nThe last sentence of \u00a76.6 says a successful DELETE MUST result in the resource being deleted. I think this might have slipped through. In March you pushed back on exactly this requirement, pointing out that RFC 7644 \u00a73.6 lets SPs retain records after deletion ([March 19](https://mailarchive.ietf.org/arch/msg/scim/Bj_b8FnMX9D4cqyVCoeBinrmmhE/)), and Matthias agreed ([March 20](https://mailarchive.ietf.org/arch/msg/scim/SAgaWS0unYWOuCUgeywOQXz_hTA/)).\n\nThe rest of \u00a76.6 already captures the behavior clients actually see: 404 afterward, omission from queries, and identifiers freed up. The simplest fix might be to drop that sentence. Alternatively, it could be reworded so it's about observable behavior rather than storage, something like \"...MUST thereafter behave as described above.\" The \"don't respond to DELETE by setting `active` to false\" part still reads fine on its own.",
       "createdAt": "2026-10-05T17:55:41Z",
-      "updatedAt": "2026-10-20T20:13:15Z",
+      "updatedAt": "2026-11-02T22:54:45Z",
       "closedAt": null,
       "comments": [
         {
@@ -95,6 +95,13 @@
           "body": "Agreed; that sentence was a leftover from before the March discussion and conflicts with RFC 7644 Section 3.6, which allows SPs to retain records after deletion. Removed in 01dc1fc (PR #16). The 404, query-omission, and identifier-release requirements in the same section already define the behavior clients observe, and the prohibition on answering DELETE by only setting `active` to `false` stays as written.",
           "createdAt": "2026-10-20T20:13:15Z",
           "updatedAt": "2026-10-20T20:13:15Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Update: the sentence was removed (01dc1fc) and the prohibition on answering DELETE\nwith only a change to `active` stays. That prohibition leaves a gap the draft does\nnot settle: an SP that cannot or will not delete has no conforming response to\nDELETE. RFC 7644 Section 3.6 lets an SP keep a resource as long as it returns 404\nfor all operations on it and omits it from queries, and lists 501 Not Implemented\nfor DELETE. This is tracked in #19, along with the related identifier reuse\nquestion. The change is merged to main in #18.\n",
+          "createdAt": "2026-11-02T22:54:45Z",
+          "updatedAt": "2026-11-02T22:54:45Z"
         }
       ]
     },
@@ -278,7 +285,7 @@
       "labels": [],
       "body": "**Section:** [\u00a76.7](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.7)\n\nI get why \u00a76.7 bans conditional headers, since it keeps both sides simple. The only thing I'd flag is that the abstract leans on the case of multiple IdPs provisioning into the same SP, which is exactly where lost updates show up. I'm not suggesting reversing the ban, but a sentence acknowledging the trade-off would help implementers know it was a deliberate choice.\n\nSeparately, on \"MAY ignore them or reject the request\": if a client does send `If-Match` and the SP silently ignores it, the client thinks it has a guard it doesn't actually have. It might be worth leaning toward reject.",
       "createdAt": "2026-10-05T17:55:54Z",
-      "updatedAt": "2026-10-20T20:13:28Z",
+      "updatedAt": "2026-11-02T22:54:47Z",
       "closedAt": null,
       "comments": [
         {
@@ -287,6 +294,13 @@
           "body": "Agreed on both (0ef8b2d, PR #16). The draft now says banning conditional headers leaves the profile with no lost-update protection, including for the multiple-IdP case in the abstract, and that this is a deliberate choice to keep Clients and SPs simple. On ignore vs. reject: RFC 9110 Section 13.1.1 requires an origin server that receives If-Match to evaluate it, and a silent ignore leaves the Client believing it has a guard it doesn't. An SP that doesn't evaluate a conditional header now SHOULD reject with 412 rather than ignore it. It stays a SHOULD so that SPs remain compatible with Clients that don't conform to the profile and send these headers today.",
           "createdAt": "2026-10-20T20:13:28Z",
           "updatedAt": "2026-10-20T20:13:28Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Follow-up on the status code. In the earlier reply I said an SP that doesn't\nevaluate a conditional header SHOULD reject with 412. RFC 9110 Section 15.5.13\ndefines 412 as the result of conditions that \"evaluated to false when tested on\nthe server\", and an SP that never evaluated the header has not tested anything,\nso 412 is the wrong code for that case. The draft now says such an SP SHOULD\nreject with 400 Bad Request instead of ignoring the header, and no longer says SPs\nare \"not expected to support\" these headers. The Client-side MUST NOT and the\nreject-rather-than-ignore intent are unchanged. Merged to main in #18\n(faecce7 is the commit).\n",
+          "createdAt": "2026-11-02T22:54:46Z",
+          "updatedAt": "2026-11-02T22:54:46Z"
         }
       ]
     },
@@ -302,7 +316,7 @@
       "labels": [],
       "body": "**Section:** [\u00a77](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-7)\n\nYour April 6 example, where two users swap userNames and a PATCH to `/Users/alice` lands on the wrong person ([April 6](https://mailarchive.ietf.org/arch/msg/scim/gKgwU5N4Wj_SFBLJhWg76MGkC4k/)), is a great rationale for the id-only rule in \u00a76.1. It would be nice to capture that in \u00a77 so the reasoning survives with the text.\n\nSimilarly, \u00a76.6 strengthens identifier release after deletion to a MUST. Identifier reuse has a security angle of its own: stale references and grants in other systems can end up pointing at a new person. A sentence on that seems worthwhile.\n\nSmall one: for TLS, citing BCP 195 (RFC 9325) instead of pinning versions might age better.",
       "createdAt": "2026-10-05T17:55:55Z",
-      "updatedAt": "2026-10-20T20:13:29Z",
+      "updatedAt": "2026-11-02T22:54:48Z",
       "closedAt": null,
       "comments": [
         {
@@ -311,6 +325,13 @@
           "body": "Agreed on both additions (ceb0c0c, PR #16). Security Considerations now has the userName swap example as the rationale for addressing resources by `id` only. The identifier reuse note separates `id`, which RFC 7643 Section 3.1 makes SP-assigned, immutable, and non-reassignable, from client-settable attributes such as `userName` and `emails.value`, which can change and be reused over time. Clients, SPs, and other systems SHOULD NOT use the latter as stable references (for access grants, role assignments, and the like) and SHOULD use `id`. An SP that doesn't want those values reused can decline to delete the resource and keep it with `active` set to `false`. That workaround exposes a gap in the lifecycle model: the Boolean `active` can't express \"permanently disabled but still exists,\" and that deserves separate work. On TLS: the pinned versions are replaced with a reference to BCP 195. The old text (MUST support TLS 1.3, MAY support TLS 1.2) didn't match RFC 9325, which requires TLS 1.2 support and recommends TLS 1.3, so this corrects that as well.",
           "createdAt": "2026-10-20T20:13:29Z",
           "updatedAt": "2026-10-20T20:13:29Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Follow-up: the paragraph in the identifier reuse note that told an SP wanting to\nprevent reuse to decline deletion and keep the resource with `active` set to\n`false` has been removed. It conflicted with the rule, kept under #4, that DELETE\nis not answered by modifying attributes. The rest of the identifier reuse note\nstays: the difference between `id` and client-set values such as `userName`, and\nthe advice not to use the latter as stable references. The gap the removed\nparagraph pointed at, that the Boolean `active` cannot express \"permanently\ndisabled but still exists\", is tracked in #19. Merged to main in #18 (95c2d60).\n",
+          "createdAt": "2026-11-02T22:54:48Z",
+          "updatedAt": "2026-11-02T22:54:48Z"
         }
       ]
     },
@@ -326,9 +347,17 @@
       "labels": [],
       "body": "**Section:** [\u00a76.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.2)\n\n\u00a76.2 says what senders must use, but not what receivers do with `application/json`. Was the intent that SPs reject it? Plenty of clients still send `application/json`, so maybe \"SPs SHOULD also accept application/json.\" This is minor, so feel free to fold it into an editorial pass.",
       "createdAt": "2026-10-05T17:55:56Z",
-      "updatedAt": "2026-10-05T17:55:56Z",
+      "updatedAt": "2026-11-02T22:54:49Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Agreed with a SHOULD. The draft now says an SP SHOULD also accept requests with\nthe media type `application/json`, which RFC 7644 Section 8.1 notes older SCIM\nversions used informally, while Clients still MUST send `application/scim+json`.\nThe same edit makes the Content-Type requirement about the media type, so\nparameters such as `charset` are permitted. Merged to main in #18 (d7ec3e1).\n",
+          "createdAt": "2026-11-02T22:54:49Z",
+          "updatedAt": "2026-11-02T22:54:49Z"
+        }
+      ]
     },
     {
       "number": 15,
@@ -367,6 +396,22 @@
       "body": "## Problem\n\nThe Rate Limiting section (https://github.com/Zollnerd/scim-interop-profile/blob/f1dcf0f247c5b73b1914bc90d0c648e9dc8a1995/draft-zollner-scim-interop-profile.md?plain=1#L222-L226, added in #16) specifies how a Service Provider signals throttling, but nothing about how limits apply across request types. A profile that sets a minimum throughput (for example, the IPSIE AL SCIM profile's 25 requests per second, openid/ipsie-scim-al#49) can be met by a Service Provider that accepts that rate for `GET` while throttling `POST`, `PATCH`, and `DELETE` far lower. Write requests carry provisioning and deprovisioning changes, so that is where integrations fail.\n\n## Proposed change\n\nWhen this profile, or a profile building on it, states a minimum request rate, the minimum applies to write requests (`POST`, `PUT`, `PATCH`, `DELETE`) as well as reads. A Service Provider MAY apply higher limits to reads.\n\n## Related\n\n- #11\n",
       "createdAt": "2026-10-29T20:26:40Z",
       "updatedAt": "2026-10-29T20:26:40Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 19,
+      "id": "I_kwDORcWBWc8AAAABb-lqGg",
+      "title": "An SP cannot block reuse of a deleted resource's unique values, and has no conforming response to DELETE if it cannot delete",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/issues/19",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Two related gaps in the lifecycle of a deleted or disabled resource.\n\n1. An SP that cannot or will not delete has no conforming response to DELETE.\n\n   The draft says an SP MUST NOT respond to an HTTP DELETE by modifying\n   resource attributes, for example by setting active to false:\n   https://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L232\n\n   RFC 7644 Section 3.6 lets an SP choose not to permanently delete a\n   resource, as long as it returns 404 for all operations on it and omits it\n   from query results. Some products deactivate the account when asked to\n   delete a user. If the SCIM resource then disappears, the SP is conformant.\n   If the resource stays visible with active set to false, the draft forbids\n   it, and the draft does not say what such an SP should return instead.\n   RFC 7644 lists 501 Not Implemented for DELETE (\"Service provider does not\n   support the request operation\").\n\n2. There currently isn't a way for an SP to block reuse of the userName,\n   email, or other unique values of a deleted resource.\n\n   DELETE requires that the resource's unique identifiers be released for\n   reassignment:\n   https://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L230\n\n   RFC 7644 Section 3.6 only says a deleted resource SHOULD NOT be considered\n   in conflict calculation, and the draft strengthens that to a MUST. The\n   only way to represent a block on reuse in SCIM today is to keep the user\n   around with active set to false. A Boolean is not adequate to represent\n   the difference between \"this user is disabled, maybe temporarily\" and\n   \"this user is permanently disabled and can never be re-enabled, but is\n   still returned on a GET to show that it holds certain\n   uniqueness-constrained attribute values\".\n\nOpen question:\n\n- What should an SP that cannot delete a resource type return for DELETE\n  (501, 405, other), and should a Client be required to handle it?\n",
+      "createdAt": "2026-11-02T22:54:27Z",
+      "updatedAt": "2026-11-02T22:54:27Z",
       "closedAt": null,
       "comments": []
     }
@@ -431,24 +476,60 @@
       "id": "PR_kwDORcWBWc8AAAABJo408g",
       "title": "Address Mike Kiser's review of -01 (issues #3 to #13, #15)",
       "url": "https://github.com/Zollnerd/scim-interop-profile/pull/16",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "Zollnerd",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "Changes in response to Mike Kiser's review of draft-zollner-scim-interop-profile-01. One commit per issue, so each issue's change can be read on its own.\n\n| Issue | Commit | Change |\n|---|---|---|\n| #3 | f1dcf0f | Replace `interopProfileConformant` with a `conformsTo` attribute holding a `profiles` list; request a \"SCIM Profile Identifiers\" IANA registry |\n| #4 | 01dc1fc | Remove the leftover \"DELETE MUST result in the resource being deleted\" sentence |\n| #5 | 4939b9e | Clients support both pagination methods; SPs publish the `pagination` block and reject unsupported pagination parameters |\n| #6 | 5a96265 | Conformance covers MUST NOT / SHALL NOT; replace \"PROHIBITED\" |\n| #7 | 539b328 | PATCH error handling: discretionary rejection, Client filter constraints, retitle |\n| #8 | 1e289d3 | `invalidValue` for unknown attributes; Clients MUST honor /Schemas |\n| #9 | 79e88ab | Add `emails.value` to case sensitivity |\n| #10 | 0da2d21 | Filters allowed on reads (GET, POST /.search), not in the URI of other methods; SPs filter on unique attributes |\n| #11 | 0cce46d | Add Rate Limiting subsection (429/503, Retry-After) |\n| #12 | 0ef8b2d | Acknowledge the lost-update trade-off; SHOULD reject conditional headers with 412 |\n| #13 | ceb0c0c | Security Considerations: id-only rationale, identifier reuse; reference BCP 195 |\n| #15 | 6498294, 6eef7b3 | Editorial fixes and informative references |\n\nNot addressed here: #14 (`application/json` handling), which stays open.\n\nThe branch builds cleanly with `make`. Open points: `conformsTo` and the `interop` profile identifier are placeholder names, and the IANA registry text follows the RFC 9967 precedent without having been reviewed by IANA or a designated expert.",
       "createdAt": "2026-10-20T20:11:01Z",
-      "updatedAt": "2026-10-20T20:11:01Z",
+      "updatedAt": "2026-11-02T22:19:42Z",
       "baseRepository": "Zollnerd/scim-interop-profile",
       "baseRefName": "main",
       "baseRefOid": "8166a9e761f93de996f301bc7243d4c9ece7b7e1",
       "headRepository": "Zollnerd/scim-interop-profile",
       "headRefName": "mike-kiser-review-feedback",
       "headRefOid": "f1dcf0f247c5b73b1914bc90d0c648e9dc8a1995",
-      "closedAt": null,
+      "closedAt": "2026-11-02T22:19:42Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
+      "comments": [
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Superseded by #18, which contains these commits plus the changes from the full-document review, so main moves directly to the final text. Commit hashes cited in replies on the linked issues are being updated.",
+          "createdAt": "2026-11-02T22:19:41Z",
+          "updatedAt": "2026-11-02T22:19:41Z"
+        }
+      ],
+      "reviews": []
+    },
+    {
+      "number": 18,
+      "id": "PR_kwDORcWBWc8AAAABMawvBA",
+      "title": "Address review feedback on draft-zollner-scim-interop-profile-01",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/pull/18",
+      "state": "MERGED",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Supersedes #16. This branch contains the commits from #16 and the later\nchanges made in a full-document review of the draft, so main moves directly\nto the final text. Issue replies that cite commit hashes from #16 are being\nupdated.\n\nChanges tied to issues #3 to #15:\n\n| Issue | Change |\n|---|---|\n| #3 | conformsTo.profiles replaces the boolean; \"SCIM Profile Identifiers\" IANA registry; new \"profile\" URN type, so the document updates RFC 7643 |\n| #4 | Removed \"DELETE MUST result in the resource being deleted\"; the rule that DELETE is not answered by setting active to false stays |\n| #5 | Clients support both pagination methods; SPs publish the pagination block and reject unsupported parameters; index pagination continues until a response has no Resources |\n| #6 | Conformance covers MUST NOT / SHALL NOT |\n| #7 | PATCH error handling and filter constraints; remove semantics, no-match behavior, op names |\n| #8 | invalidValue for unknown attributes; invalidPath for an unknown PATCH path |\n| #9 | emails.value case sensitivity |\n| #10 | Filters on reads; eq on externalId; invalidFilter for unfilterable attributes |\n| #11 | Rate limiting; Retry-After forms and backoff |\n| #12 | Lost-update trade-off; a header an SP does not evaluate is rejected with 400 |\n| #13 | id-only rationale and identifier reuse; BCP 195. The paragraph advising SPs to keep deleted resources with active=false is removed |\n| #14 | SPs SHOULD also accept application/json |\n| #15 | Editorial fixes |\n\nFurther changes from the review: complex replace follows RFC 7644 Section\n3.5.2.3; filtered add/replace that match nothing return noTarget; canonicalValues\nis described as a tightening; scope paragraph; requirements apply to every\nresource type; acknowledgements.\n\nBuilds with make. Open points: the \"interop\" profile identifier is a\nplaceholder, and the IANA text has not been reviewed by IANA or a designated\nexpert.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n",
+      "createdAt": "2026-11-02T22:19:27Z",
+      "updatedAt": "2026-11-02T22:25:59Z",
+      "baseRepository": "Zollnerd/scim-interop-profile",
+      "baseRefName": "main",
+      "baseRefOid": "8166a9e761f93de996f301bc7243d4c9ece7b7e1",
+      "headRepository": "Zollnerd/scim-interop-profile",
+      "headRefName": "review-2026-10-27-fixes",
+      "headRefOid": "2eeb27e3f6dd8f1ab7c2dfc74b0e918d5b8924be",
+      "closedAt": "2026-11-02T22:25:58Z",
+      "mergedAt": "2026-11-02T22:25:58Z",
+      "mergedBy": "Zollnerd",
+      "mergeCommit": {
+        "oid": "6c5395d85b2ee522bbed861e19513f7ef241d252"
+      },
       "comments": [],
       "reviews": []
     }
