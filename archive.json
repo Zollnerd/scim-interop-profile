@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-11-03T04:35:40.784157+00:00",
+  "timestamp": "2026-11-05T04:15:46.524083+00:00",
   "repo": "Zollnerd/scim-interop-profile",
   "labels": [
     {
@@ -79,15 +79,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2JPw",
       "title": "\u00a76.6: DELETE \"MUST result in the resource being deleted\" seems like a leftover",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/4",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a76.6](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.6)\n\nThe last sentence of \u00a76.6 says a successful DELETE MUST result in the resource being deleted. I think this might have slipped through. In March you pushed back on exactly this requirement, pointing out that RFC 7644 \u00a73.6 lets SPs retain records after deletion ([March 19](https://mailarchive.ietf.org/arch/msg/scim/Bj_b8FnMX9D4cqyVCoeBinrmmhE/)), and Matthias agreed ([March 20](https://mailarchive.ietf.org/arch/msg/scim/SAgaWS0unYWOuCUgeywOQXz_hTA/)).\n\nThe rest of \u00a76.6 already captures the behavior clients actually see: 404 afterward, omission from queries, and identifiers freed up. The simplest fix might be to drop that sentence. Alternatively, it could be reworded so it's about observable behavior rather than storage, something like \"...MUST thereafter behave as described above.\" The \"don't respond to DELETE by setting `active` to false\" part still reads fine on its own.",
       "createdAt": "2026-10-05T17:55:41Z",
-      "updatedAt": "2026-11-02T22:54:45Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T19:39:11Z",
+      "closedAt": "2026-11-04T19:39:11Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -102,6 +102,13 @@
           "body": "Update: the sentence was removed (01dc1fc) and the prohibition on answering DELETE\nwith only a change to `active` stays. That prohibition leaves a gap the draft does\nnot settle: an SP that cannot or will not delete has no conforming response to\nDELETE. RFC 7644 Section 3.6 lets an SP keep a resource as long as it returns 404\nfor all operations on it and omits it from queries, and lists 501 Not Implemented\nfor DELETE. This is tracked in #19, along with the related identifier reuse\nquestion. The change is merged to main in #18.\n",
           "createdAt": "2026-11-02T22:54:45Z",
           "updatedAt": "2026-11-02T22:54:45Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The change that resolves this is merged to main (#18) and published in draft-zollner-scim-interop-profile-02. Closing as resolved; reopen or comment if anything still looks off.",
+          "createdAt": "2026-11-04T19:39:10Z",
+          "updatedAt": "2026-11-04T19:39:10Z"
         }
       ]
     },
@@ -110,15 +117,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2KMw",
       "title": "\u00a76.4: pagination mismatch between conformant clients and SPs can silently truncate results",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/5",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a76.4](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.4)\n\nI think there's a gap here. An SP can implement index-based *or* cursor-based pagination, but nothing says a client has to handle both. So a cursor-only SP and an index-only client (or the reverse) are both conformant and still can't page through results together.\n\nWhat worries me is that this mismatch fails quietly. A cursor-only client talking to an index-only SP sends `cursor=`, gets back the first page with no `nextCursor`, and per RFC 9865 reads that as \"last page.\" Going the other way, an index-only client sends `startIndex=101` to a cursor-only SP that ignores it, and probably gets page one again. RFC 9865 also lets cursor SPs omit `totalResults`, so there may be nothing to check against. In provisioning, a truncated read feeds straight into reconciliation: duplicate creates, or worse, missed deprovisioning.\n\nHere's what I'd suggest, as two pieces that work together:\n\n- **Clients support both methods.** In the many-to-many model the abstract describes, clients are a handful of large IdPs and SPs are a long tail of SaaS apps. It seems better to put the burden on the few clients, and that keeps cursor-only SPs viable, which is the whole point of RFC 9865.\n- **Make mismatches loud.** SPs publish the RFC 9865 `pagination` block in ServiceProviderConfig (it's currently OPTIONAL there), and reject a pagination parameter they don't support with a 400 rather than silently ignoring it. That turns silent truncation into a visible error even when something else goes wrong.\n\nI'd steer away from just making index-based mandatory for SPs. It's simpler on paper, but it pushes cursor-native backends right back into the pagination translation RFC 9865 was written to avoid.\n\nA related nit: \"MUST return fewer results than requested when the client specifies a count value that exceeds that limit\" might read more clearly as \"MUST truncate to its maximum rather than returning an error.\" That would make it obvious what implementers shouldn't do.",
       "createdAt": "2026-10-05T17:55:42Z",
-      "updatedAt": "2026-10-20T20:13:16Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T20:30:24Z",
+      "closedAt": "2026-11-04T20:30:24Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -126,6 +133,13 @@
           "body": "RFC 9865 doesn't say what an SP does with a pagination parameter it doesn't support, and cursor SPs may omit `totalResults`, so a mismatched pairing can truncate results with nothing to flag it. Both changes you suggested are in 4939b9e (PR #16): Clients MUST support both methods (and follow `nextCursor` whenever it appears), and SPs MUST publish the `pagination` block and reject unsupported pagination parameters with a 400. The client-side requirement is a significant new obligation, so I'll flag it on the list for WG input. The `count` sentence is reworded as suggested.",
           "createdAt": "2026-10-20T20:13:16Z",
           "updatedAt": "2026-10-20T20:13:16Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Current state in draft-zollner-scim-interop-profile-02 (merged in #18). Both pieces you suggested are in (4939b9e): Clients MUST support both pagination methods and follow `nextCursor` whenever it appears, and SPs MUST publish the `pagination` block and MUST return 400 for a pagination parameter they do not support. The `count` sentence reads \"MUST truncate to that maximum, rather than returning an error.\" Since the earlier reply (cfbd7a9): for index-based pagination a Client MUST keep requesting pages until a response contains no `Resources` and MUST NOT rely on `totalResults` alone, because RFC 9865 only says SPs should return an accurate `totalResults` and lets cursor SPs omit it; an SP that enforces a maximum page size MUST set it to at least 100; and SPs SHOULD return results in the same order across pages when `sortBy` is absent.\n\nThe requirement that Clients support both methods is a significant new obligation. I will put that question to the SCIM WG mailing list. Closing this issue since the changes you suggested are in; the WG discussion will happen on the list.\n",
+          "createdAt": "2026-11-04T20:30:18Z",
+          "updatedAt": "2026-11-04T20:30:18Z"
         }
       ]
     },
@@ -134,15 +148,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2LPw",
       "title": "\u00a74: conformance definition seems to leave out MUST NOT / SHALL NOT",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/6",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Sections:** [\u00a74](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-4), [\u00a76.5.2.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.2.2)\n\n\u00a74 defines conformance in terms of requirements expressed with MUST, SHALL, and REQUIRED. Read literally, that leaves out the MUST NOT and SHALL NOT requirements, and a lot of the profile's value is in those. Maybe something like \"all absolute requirements and prohibitions as defined in BCP 14\"?\n\nRelatedly, \u00a76.5.2.2 uses \"PROHIBITED,\" which isn't a BCP 14 keyword. Swapping it for MUST NOT would bring that rule into scope too.",
       "createdAt": "2026-10-05T17:55:43Z",
-      "updatedAt": "2026-10-20T20:13:18Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T19:39:14Z",
+      "closedAt": "2026-11-04T19:39:14Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -150,6 +164,13 @@
           "body": "Agreed on both (5a96265, PR #16). The conformance definition now covers all absolute requirements and prohibitions per BCP 14, so MUST NOT and SHALL NOT are in scope, and \"PROHIBITED\" is replaced with a client-directed MUST NOT.",
           "createdAt": "2026-10-20T20:13:18Z",
           "updatedAt": "2026-10-20T20:13:18Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The change that resolves this is merged to main (#18) and published in draft-zollner-scim-interop-profile-02. Closing as resolved; reopen or comment if anything still looks off.",
+          "createdAt": "2026-11-04T19:39:13Z",
+          "updatedAt": "2026-11-04T19:39:13Z"
         }
       ]
     },
@@ -158,15 +179,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2MYg",
       "title": "\u00a76.5.3: MAY seems to soften the MUST in \u00a76.5.1.1",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/7",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Sections:** [\u00a76.5.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.3), [\u00a76.5.1.1](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.1.1)\n\n\u00a76.5.1.1 says SPs MUST reject a PATCH with no `path` using 400 and invalidSyntax. \u00a76.5.3 then says SPs MAY return 400 for any operation that violates the constraints. I'm guessing the MAY was meant as \"here's what to use when you reject,\" but it reads as if rejection is optional.\n\nA few other things I noticed in \u00a76.5.3:\n\n- It mentions \"prohibited operators,\" but I couldn't find where those are defined.\n- It lists invalidFilter for a filter that matches more than one element, but nothing earlier says a multi-match is an error. Is that the intent? If so, it might be worth stating up in \u00a76.5.2.2.\n- There are two sections titled \"Error Handling\" (\u00a76.5.3 and \u00a76.9). Maybe call this one \"PATCH Error Handling.\"",
       "createdAt": "2026-10-05T17:55:45Z",
-      "updatedAt": "2026-10-20T20:13:20Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T20:31:31Z",
+      "closedAt": "2026-11-04T20:30:26Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -174,6 +195,20 @@
           "body": "The MAY was meant to say what an SP uses when it rejects, not to make rejection optional. The profile's approach is to place hard requirements on Clients so that SPs stay compatible with Clients that don't conform to it, so rejection is now discretionary in both places (539b328, PR #16). That includes the path-less case in 6.5.1.1, where the MUST became a MAY, so the two sections no longer conflict. An SP that rejects MUST use the specified error codes. \"Prohibited operators\" referred to the eq/and restriction, which was only stated for the `filter` query parameter; it is now stated in the PATCH constraints as a Client requirement and mapped to `invalidFilter`, which RFC 7644 Table 9 lists for PATCH path filters. On multi-match: RFC 7644 Section 3.5.2 replaces all matching values, so I added a Client requirement not to send such filters, with `invalidPath` for SPs that reject them. `invalidFilter` covers invalid syntax and unsupported attribute/filter combinations rather than ambiguous matches. The section is retitled \"PATCH Error Handling.\"",
           "createdAt": "2026-10-20T20:13:20Z",
           "updatedAt": "2026-10-20T20:13:20Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Current state in draft-zollner-scim-interop-profile-02 (merged in #18). The four points are settled (539b328): (1) rejection of a path-less PATCH is discretionary in both places, and an SP that rejects uses 400 with `invalidSyntax`; (2) \"prohibited operators\" is stated as a Client requirement, `eq` and `and` only in a `path` filter, mapped to `invalidFilter`; (3) a `path` filter that matches more than one element is a Client error, with `invalidPath` for SPs that reject it; (4) the section is titled \"PATCH Error Handling.\"\n\nThe PATCH rules have grown since then. `remove` is defined (47766e0, 6944356): an element-level filter such as `members[value eq \"...\"]` is allowed, Clients MUST NOT include a `value` in a `remove`, and the filter syntax for simple multi-valued attributes, which RFC 7644 does not define, is specified by the profile. A filtered `add` or `replace` that matches no element returns 400 `noTarget`, and a `remove` that matches nothing succeeds with no change (3aec15a). `invalidSyntax` now also covers a `remove` containing a `value`, and `invalidPath` also covers a `path` naming an undefined attribute (8b44c69).\n\nOne question from the original discussion is still open: RFC 7644 Table 9 does not list `invalidSyntax` for PATCH, and Section 3.5.2.2 specifies `noTarget` for a `remove` with no `path`, while the profile uses `invalidSyntax` for a path-less operation. I will raise that on the SCIM WG mailing list together with the broader discussion of multi-valued attribute PATCH behavior. Closing this issue since its points are addressed.\n",
+          "createdAt": "2026-11-04T20:30:20Z",
+          "updatedAt": "2026-11-04T20:30:20Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Correction to my comment above: the open question about the error code for a path-less operation is more specific than I wrote. RFC 7644 Section 3.5.2 makes `path` optional for `add` and `replace` and required for `remove`; Section 3.5.2.2 gives `noTarget` for a `remove` with no `path`, while Table 9 does not list `invalidSyntax` for PATCH at all. I have moved that question to #20 so it can be settled separately.\n",
+          "createdAt": "2026-11-04T20:31:31Z",
+          "updatedAt": "2026-11-04T20:31:31Z"
         }
       ]
     },
@@ -189,7 +224,7 @@
       "labels": [],
       "body": "**Section:** [\u00a75.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.3)\n\nStrict rejection of unknown attributes seems like the right call to me. Two thoughts on it.\n\nFirst, invalidSyntax feels aimed at requests the SP can't parse. If I'm reading RFC 7644 Table 9 right, invalidValue's definition covers values that aren't compatible with the resource schema, which seems closer to this case. I'm not certain that's the best fit, but it seems worth a look.\n\nSecond, strict rejection pretty much requires clients to read /Schemas before sending anything, which \u00a75.4 already assumes. It might help to say that outright, something like \"Clients SHOULD (or MUST) consult /Schemas and only send attributes and schema URIs the SP advertises.\" That would make the pairing between the two sections explicit.",
       "createdAt": "2026-10-05T17:55:46Z",
-      "updatedAt": "2026-10-20T20:13:22Z",
+      "updatedAt": "2026-11-04T20:30:17Z",
       "closedAt": null,
       "comments": [
         {
@@ -198,6 +233,13 @@
           "body": "Agreed on both (1e289d3, PR #16). RFC 7644 Table 9 lists `invalidValue` for values that aren't compatible with the resource schema, and lists it for both POST and PATCH, so the draft now uses it. The /Schemas pairing is now a Client requirement: Clients MUST consult /Schemas and only send attributes and schema URIs the SP advertises. I used a MUST because the SP side already rejects the request, so a SHOULD would let a conformant Client send requests that a conformant SP rejects.",
           "createdAt": "2026-10-20T20:13:22Z",
           "updatedAt": "2026-10-20T20:13:22Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Final state in draft-zollner-scim-interop-profile-02 (merged in #18). An SP MUST reject a request that contains attributes or schema URIs it does not define, with 400 Bad Request. The `scimType` is `invalidValue`, as agreed above, with one refinement: when the `path` of a PATCH operation names an attribute that is not defined, it is `invalidPath`, which RFC 7644 Table 9 defines as the `path` attribute being invalid or malformed (8b44c69). The Client side is unchanged: Clients MUST consult `/Schemas` and MUST NOT send attributes or schema URIs the SP does not advertise. Three clarifications went in alongside: the `schemas` attribute of a request MUST list the URI of every schema whose attributes appear in the body (RFC 7643 Section 3); the common attributes (`id`, `externalId`, `meta`) are always treated as defined, since RFC 7643 Section 3.1 gives them no `schemas` URI of their own; and `readOnly` attributes are not rejected by this rule, because they are ignored on POST and PUT (RFC 7644 Sections 3.3 and 3.5.1) and a PATCH that modifies one is handled under RFC 7644 Section 3.5.2.\n",
+          "createdAt": "2026-11-04T20:30:17Z",
+          "updatedAt": "2026-11-04T20:30:17Z"
         }
       ]
     },
@@ -206,15 +248,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2PBg",
       "title": "\u00a75.2: case sensitivity for emails?",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/9",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a75.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.2)\n\n\u00a76.9.1 uses emails as its example of a uniqueness conflict, but \u00a75.2 doesn't list emails. Since \u00a75.2 ties filter case rules to uniqueness rules, emails seems like the most likely place for that to bite. It might be worth adding an entry that reiterates whatever RFC 7643 says for `emails.value`.\n\nGroup `displayName` would be the other candidate. Based on the March discussion, that probably belongs with the IPSIE work, so a pointer there might be enough.",
       "createdAt": "2026-10-05T17:55:48Z",
-      "updatedAt": "2026-10-20T20:13:23Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T19:39:16Z",
+      "closedAt": "2026-11-04T19:39:16Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -222,6 +264,13 @@
           "body": "Agreed on `emails.value` (79e88ab, PR #16). It is added to the case sensitivity list with the RFC 7643 definition (`caseExact` of `false`), treating the entire address as case-insensitive. This departs from RFC 5321 Section 2.4, which treats the mailbox local-part as case sensitive, but that section also discourages relying on local-part case sensitivity because it impedes interoperability, and the prevailing pattern in deployed mail systems is to treat the whole address as case-insensitive. Group `displayName` is outside what this profile covers, so there is no entry for it here.",
           "createdAt": "2026-10-20T20:13:23Z",
           "updatedAt": "2026-10-20T20:13:23Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The change that resolves this is merged to main (#18) and published in draft-zollner-scim-interop-profile-02. Closing as resolved; reopen or comment if anything still looks off.",
+          "createdAt": "2026-11-04T19:39:15Z",
+          "updatedAt": "2026-11-04T19:39:15Z"
         }
       ]
     },
@@ -230,15 +279,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2RRA",
       "title": "\u00a76.3: /.search, and who the non-GET filter rule applies to",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/10",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a76.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.3)\n\nA few small things in \u00a76.3:\n\n- **`/.search`.** With filters in the URI banned for anything but GET, someone might reach for POST `/.search` instead. It would help to say whether that's allowed, optional, or out of bounds.\n- **Who the rule binds.** \"The use of filters in the URI for any HTTP method other than GET *MUST NOT* be used\" is passive, so it's unclear who it applies to. I assume it means clients MUST NOT send these. Should SPs also reject them?\n- **Minimum filterable attributes.** Is there a minimum set SPs must support filtering on (userName, externalId, displayName)? If that's deferred to IPSIE, a pointer would do.",
       "createdAt": "2026-10-05T17:55:51Z",
-      "updatedAt": "2026-10-20T20:13:25Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T20:30:27Z",
+      "closedAt": "2026-11-04T20:30:27Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -246,6 +295,13 @@
           "body": "The prohibition is aimed at filters in the HTTP request URI on anything other than GET, such as `PATCH /Users?filter=...`, which would apply the request body to every matching resource. Filters on reads are fine, so the draft now states explicitly that GET with the `filter` parameter and POST `/.search` with the filter in the body are both permitted, that the restriction applies only to the request URI (filters in a PATCH `path` and in a `/.search` body are not affected), and that the eq/and restriction applies to either read form (0da2d21, PR #16). The rule binds Clients only; SPs aren't required to reject filtered writes, which keeps them compatible with Clients that don't conform to the profile. On minimum filterable attributes: resource-specific lists aren't part of this profile, but the draft now requires SPs to support `eq` filtering on any attribute they enforce uniqueness on, so that Clients can locate the resource behind a conflict.",
           "createdAt": "2026-10-20T20:13:25Z",
           "updatedAt": "2026-10-20T20:13:25Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Current state in draft-zollner-scim-interop-profile-02 (merged in #18). On your three points: (1) `/.search` is permitted. `GET` with a `filter` parameter and `POST` to `/.search` with the filter in the body are both allowed, and the restriction on filters applies only to the request URI (0da2d21). (2) The rule binds Clients; SPs are not required to reject filtered writes. (3) Resource-specific lists of filterable attributes stay out of this profile. The profile requires `eq` filtering on every attribute for which an SP enforces uniqueness, and since the earlier reply also on `externalId` for SPs that support it (b3087f3). A filter on an attribute the SP does not support filtering on gets 400 `invalidFilter`, and the SP MUST NOT ignore it and return unfiltered results. Finding the resources behind a uniqueness conflict is limited to resources the requesting Client can access (24b0dd5). Group `displayName` belongs to the IPSIE profile, which already requires `displayName eq` for groups; I filed openid/ipsie-scim-al#47 on making `displayName` unique, or requiring another unique group identifier.\n\nA related question is still open. RFC 7644 Section 7.5.2 lets an SP answer a GET filter that contains sensitive data with 403 and `scimType` `sensitive`, but the profile does not require `/.search`, so a required lookup could be refused with no alternative. I will put that to the SCIM WG mailing list. Closing this issue since the three points are addressed.\n",
+          "createdAt": "2026-11-04T20:30:22Z",
+          "updatedAt": "2026-11-04T20:30:22Z"
         }
       ]
     },
@@ -254,15 +310,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2SlQ",
       "title": "Rate limiting (429 / Retry-After)",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/11",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a76.9](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.9)\n\nIn my experience, rate limiting is one of the things that ends up custom per integration. Would a short paragraph be worth adding? Something like: SPs SHOULD return 429 with Retry-After when throttling, and clients MUST honor Retry-After and back off. That paragraph might cover 503 as well.",
       "createdAt": "2026-10-05T17:55:52Z",
-      "updatedAt": "2026-10-20T20:13:26Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T20:30:28Z",
+      "closedAt": "2026-11-04T20:30:28Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -270,6 +326,13 @@
           "body": "Agreed (0cce46d, PR #16). A new Rate Limiting subsection says SPs that throttle SHOULD respond with 429 and Retry-After, with 503 permitted as an alternative, and Clients MUST NOT retry before the Retry-After time has elapsed and MUST back off when it is absent. The SP side stays a SHOULD because RFC 6585 Section 7.2 says servers aren't required to use 429. One correction on references: 429 is defined in RFC 6585, not RFC 9110, so the draft cites both.",
           "createdAt": "2026-10-20T20:13:26Z",
           "updatedAt": "2026-10-20T20:13:26Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "Current state in draft-zollner-scim-interop-profile-02 (merged in #18). The Rate Limiting subsection (0cce46d) says an SP that throttles SHOULD respond with 429 and `Retry-After`, with 503 allowed as an alternative, and a Client MUST NOT retry before the `Retry-After` time has elapsed. Since the earlier reply (c67a0d0): Clients MUST accept both forms of `Retry-After`, an HTTP-date and a number of seconds (RFC 9110 Section 10.2.3); and when no `Retry-After` is sent, a Client MUST wait before retrying, MUST increase the wait on each consecutive retry of the same request, and MUST stop after a bounded number of attempts. The profile does not specify backoff constants. A related gap, that a minimum request rate set by a profile building on this one must also cover write requests, is tracked in #17. Closing this issue since the changes you suggested are in.\n",
+          "createdAt": "2026-11-04T20:30:23Z",
+          "updatedAt": "2026-11-04T20:30:23Z"
         }
       ]
     },
@@ -340,15 +403,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2WRQ",
       "title": "\u00a76.2: what should receivers do with application/json?",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/14",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Section:** [\u00a76.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.2)\n\n\u00a76.2 says what senders must use, but not what receivers do with `application/json`. Was the intent that SPs reject it? Plenty of clients still send `application/json`, so maybe \"SPs SHOULD also accept application/json.\" This is minor, so feel free to fold it into an editorial pass.",
       "createdAt": "2026-10-05T17:55:56Z",
-      "updatedAt": "2026-11-02T22:54:49Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T19:39:19Z",
+      "closedAt": "2026-11-04T19:39:18Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -356,6 +419,13 @@
           "body": "Agreed with a SHOULD. The draft now says an SP SHOULD also accept requests with\nthe media type `application/json`, which RFC 7644 Section 8.1 notes older SCIM\nversions used informally, while Clients still MUST send `application/scim+json`.\nThe same edit makes the Content-Type requirement about the media type, so\nparameters such as `charset` are permitted. Merged to main in #18 (d7ec3e1).\n",
           "createdAt": "2026-11-02T22:54:49Z",
           "updatedAt": "2026-11-02T22:54:49Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The change that resolves this is merged to main (#18) and published in draft-zollner-scim-interop-profile-02. Closing as resolved; reopen or comment if anything still looks off.",
+          "createdAt": "2026-11-04T19:39:18Z",
+          "updatedAt": "2026-11-04T19:39:18Z"
         }
       ]
     },
@@ -364,15 +434,15 @@
       "id": "I_kwDORcWBWc8AAAABVL2XSA",
       "title": "Editorial bits",
       "url": "https://github.com/Zollnerd/scim-interop-profile/issues/15",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "derrumbe",
       "authorAssociation": "NONE",
       "assignees": [],
       "labels": [],
       "body": "**Sections:** [\u00a72](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-2), [\u00a75.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-5.2), [\u00a76.2](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.2), [\u00a76.5.3](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-6.5.3), [\u00a79](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-9), [\u00a710](https://www.ietf.org/archive/id/draft-zollner-scim-interop-profile-01.html#section-10)\n\nA handful of small things, all in one place:\n\n- The intro reads \"The SCIM 2.0 standard RFC7643 [RFC7644].\" I think it's meant to cite both RFCs.\n- Markdown emphasis (`*MUST*`) and inline bullets are leaking into the rendered text in \u00a75.2 and \u00a76.5.3. The bullets end up collapsed into the paragraph.\n- In \u00a76.2, the User-Agent text uses a lowercase \"should.\" Was that meant to be SHOULD?\n- There's no Informative References section yet. RFC 9110 (for 409, 429, and User-Agent), RFC 6750, and BCP 195 seem like candidates.\n- Acknowledgements is still a TODO.",
       "createdAt": "2026-10-05T17:55:57Z",
-      "updatedAt": "2026-10-20T20:13:31Z",
-      "closedAt": null,
+      "updatedAt": "2026-11-04T19:39:21Z",
+      "closedAt": "2026-11-04T19:39:21Z",
       "comments": [
         {
           "author": "Zollnerd",
@@ -380,6 +450,13 @@
           "body": "Agreed on all of these (6498294 and 6eef7b3, PR #16). The intro cites both RFCs. The emphasis markup is removed and the collapsed lists are fixed, since both were rendering literally in the published text. For the User-Agent text, the informal \"should\" is reworded as a plain description of what the value is expected to contain, since a requirement about \"meaningful\" content can't be tested. RFC 9110 is cited for 409 and User-Agent. For references, RFC 9110, RFC 6585, and BCP 195 are cited in normative sentences, so they're normative references, and there is now an informative section with RFC 6750 and a sentence on Bearer tokens in the Authentication section. Acknowledgements will be filled in before the next published revision.",
           "createdAt": "2026-10-20T20:13:31Z",
           "updatedAt": "2026-10-20T20:13:31Z"
+        },
+        {
+          "author": "Zollnerd",
+          "authorAssociation": "OWNER",
+          "body": "The change that resolves this is merged to main (#18) and published in draft-zollner-scim-interop-profile-02. Closing as resolved; reopen or comment if anything still looks off.",
+          "createdAt": "2026-11-04T19:39:20Z",
+          "updatedAt": "2026-11-04T19:39:20Z"
         }
       ]
     },
@@ -412,6 +489,54 @@
       "body": "Two related gaps in the lifecycle of a deleted or disabled resource.\n\n1. An SP that cannot or will not delete has no conforming response to DELETE.\n\n   The draft says an SP MUST NOT respond to an HTTP DELETE by modifying\n   resource attributes, for example by setting active to false:\n   https://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L232\n\n   RFC 7644 Section 3.6 lets an SP choose not to permanently delete a\n   resource, as long as it returns 404 for all operations on it and omits it\n   from query results. Some products deactivate the account when asked to\n   delete a user. If the SCIM resource then disappears, the SP is conformant.\n   If the resource stays visible with active set to false, the draft forbids\n   it, and the draft does not say what such an SP should return instead.\n   RFC 7644 lists 501 Not Implemented for DELETE (\"Service provider does not\n   support the request operation\").\n\n2. There currently isn't a way for an SP to block reuse of the userName,\n   email, or other unique values of a deleted resource.\n\n   DELETE requires that the resource's unique identifiers be released for\n   reassignment:\n   https://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L230\n\n   RFC 7644 Section 3.6 only says a deleted resource SHOULD NOT be considered\n   in conflict calculation, and the draft strengthens that to a MUST. The\n   only way to represent a block on reuse in SCIM today is to keep the user\n   around with active set to false. A Boolean is not adequate to represent\n   the difference between \"this user is disabled, maybe temporarily\" and\n   \"this user is permanently disabled and can never be re-enabled, but is\n   still returned on a GET to show that it holds certain\n   uniqueness-constrained attribute values\".\n\nOpen question:\n\n- What should an SP that cannot delete a resource type return for DELETE\n  (501, 405, other), and should a Client be required to handle it?\n",
       "createdAt": "2026-11-02T22:54:27Z",
       "updatedAt": "2026-11-02T22:54:27Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 20,
+      "id": "I_kwDORcWBWc8AAAABcjIFMg",
+      "title": "Which scimType should an SP use when rejecting a PATCH operation that has no path?",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/issues/20",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Split out of #7, where the other points are resolved.\n\nThe profile requires every PATCH operation to include a `path` (Mandatory Use of the 'path' Attribute), and says an SP that rejects a path-less operation MUST use 400 with a `scimType` of `invalidSyntax`:\nhttps://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L180\n\nRFC 7644 Table 9 lists `invalidSyntax` for POST (search, create, bulk) and PUT, but not for PATCH. For PATCH, Section 3.5.2.2 says that a `remove` whose `path` is unspecified fails with 400 and `noTarget`, while `path` is optional for `add` and `replace` (Section 3.5.2). So the code the profile uses for a path-less `add` or `replace` has no listed PATCH basis in the RFC, and a path-less `remove` would get `noTarget` under the RFC but `invalidSyntax` under the profile.\n\nOptions:\n\n- Keep `invalidSyntax` for path-less `add` and `replace`, and say that a path-less `remove` follows the RFC (`noTarget`).\n- Use `noTarget` for all path-less operations, matching the RFC's code for `remove`.\n- Use `invalidPath`, which Table 9 lists for PATCH and defines as a `path` attribute that is invalid or malformed.\n\nI will put this question to the SCIM WG mailing list together with the broader discussion of PATCH behavior on multi-valued attributes.\n",
+      "createdAt": "2026-11-04T20:31:30Z",
+      "updatedAt": "2026-11-04T20:31:30Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 21,
+      "id": "I_kwDORcWBWc8AAAABcjgBiw",
+      "title": "Filters on sensitive attributes: SPs may refuse required GET lookups with 403 sensitive, and /.search is optional",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/issues/21",
+      "state": "OPEN",
+      "author": "Zollnerd",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The Filtering section requires Service Providers to support `eq` filtering on every attribute for which they enforce uniqueness, so that Clients can find the resource behind a uniqueness conflict, and on `externalId`:\nhttps://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L146\n\nIt also lets Clients use `GET` with a filter in the request URI, or `POST` to `/.search` with the filter in the body:\nhttps://github.com/Zollnerd/scim-interop-profile/blob/6c5395d85b2ee522bbed861e19513f7ef241d252/draft-zollner-scim-interop-profile.md?plain=1#L148\n\nRFC 7644 Section 7.5.2 says a server that receives a `GET` request whose filter contains sensitive or confidential personal information SHOULD respond with 403, and MAY use a `scimType` of `sensitive` to indicate that the request must be submitted using `POST`. The profile does not require `/.search` (Section 3.4.3 of RFC 7644 only says Clients MAY use it, and #10 settled that it is permitted and optional), and RFC 7643 defines no ServiceProviderConfig flag that says whether `/.search` is supported. A conformant SP can therefore answer a required lookup, for example `emails.value eq \"...\"`, with 403 `sensitive` and offer no alternative, and a conformant Client has no defined way to continue.\n\nA 403 also does not undo the exposure. By the time it is returned, the filter value in a `GET` URI has already reached access logs, proxies, and browser history. The control that protects anything is the Client choosing not to put the value in the URI.\n\nOptions for discussion, from least to most strict:\n\nX. SPs MUST support `/.search` if they return 403 with a `scimType` of `sensitive` on any filter. Clients MUST support `/.search` and MUST repeat a query as `POST` to `/.search` after receiving that response. Cost: a new Client capability, and a new SP requirement only for SPs that choose to use `sensitive`.\n\nZ. X, plus Clients SHOULD use `/.search` instead of a filter in the request URI when the filter value is personally identifiable information. Cost: low, but it needs a working definition of which attributes carry PII.\n\nY. SPs MUST support `/.search` and MUST return 403 with a `scimType` of `sensitive` for filters on attributes that contain PII. Clients MUST support `/.search` and MUST use it instead of a filter in the request URI for such attributes. Cost: the strongest privacy outcome, but it needs a definition of PII, and because SPs accept URI filters on those attributes today, requiring the 403 would break integrations that work now.\n\nQuestions for implementers:\n\n- Do you support `/.search` today, and is there a way for a Client to tell?\n- Is there a practical definition of \"attribute that contains PII\" that two implementations would agree on?\n- Do you return 403 `sensitive` today, and for which attributes?\n\nRelated: #10.\n",
+      "createdAt": "2026-11-04T20:56:25Z",
+      "updatedAt": "2026-11-04T20:56:25Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 22,
+      "id": "I_kwDORcWBWc8AAAABcmXu5g",
+      "title": "Identifier Reuse: \"person\" is narrower than the profile's scope",
+      "url": "https://github.com/Zollnerd/scim-interop-profile/issues/22",
+      "state": "OPEN",
+      "author": "Synchrowise",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "-02 now states that the requirements apply to every resource type, including types defined outside RFC 7643. The last sentence of the Identifier Reuse section still says a record keyed on a reusable value \"can end up applying to a different person\". I suggest \"resource\" instead.\n\nNon-human resources make the risk more common, not less. A redeployed agent often gets the same agentUserName as the instance it replaces (draft-wzdk-scim-agent-resource), so a grant keyed on that name passes silently to the new instance.\n\nAyoub Assaid",
+      "createdAt": "2026-11-05T00:40:27Z",
+      "updatedAt": "2026-11-05T00:44:02Z",
       "closedAt": null,
       "comments": []
     }
